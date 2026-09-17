@@ -74,8 +74,13 @@ colores ni fuentes sin que se pida explícitamente.
 - Identidad visual completa (Agón y Stadion).
 
 **En curso — segunda entrega:**
-- [ ] Modelo relacional normalizado + DDL (SQL en `sql/`).
-- [ ] DCL: usuarios de base de datos con restricciones (`GRANT`).
+- [x] Modelo relacional normalizado + DDL — `sql/schema.sql`, 16 tablas en
+      3FN, probado en MariaDB 10.11 (la versión de la VM).
+- [x] DCL: usuarios de base de datos con restricciones (`GRANT`) — en la
+      sección 12 de `sql/schema.sql`, tres usuarios por nivel de
+      privilegio. **Pendiente de confirmación docente**: el DCL no se dio
+      en clase, se incluyó porque lo exige la consigna (queda anotado en
+      el propio archivo).
 - [ ] Modelos PHP alineados al modelo relacional.
 - [ ] Integración con PHP usando POO — mínimo gestión de usuarios
       funcionando (alta, baja, login).
