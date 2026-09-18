@@ -21,10 +21,12 @@ marcarla como "pendiente de confirmación docente" en vez de improvisarla.
 Lo dado en clase, por materia:
 - **Programación Fullstack**: HTML y CSS (semántica, formularios, tablas, box
   model, selectores, Flexbox, Grid, media queries, mobile-first). PHP con
-  MVC y POO sin frameworks. Modelo relacional y DDL. **No se dio JavaScript
-  ni conexión PHP–MySQL en clase**; la conexión a base de datos se
-  implementa igual porque la consigna la exige, dejando nota de que no fue
-  dada en clase.
+  MVC y POO sin frameworks. Modelo relacional y DDL. **No se dio JavaScript,
+  ni conexión PHP–MySQL, ni sesiones (`$_SESSION`) en clase**; las tres se
+  implementan igual porque la consigna las exige, dejando nota de que no
+  fueron dadas en clase. Las sesiones se usan de la forma más simple
+  posible: `session_start()` al principio del controlador y el id del
+  usuario guardado en `$_SESSION`, nada más.
 - **Administración de SO**: AlmaLinux 8.10 minimal (la VM del instituto
   trae Apache 2.4, PHP 8.3, MariaDB 10.11), comandos de administración,
   `useradd`/`usermod`/`passwd`, permisos octales, expresiones regulares,
@@ -41,11 +43,14 @@ stadion/
 │   ├── index.html          ← vista de entrada / formulario
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
 └── apps/
-    ├── index.php           ← copia de la vista para re-incluir tras procesar
+    ├── index.php           ← vista de resultado, se re-incluye tras procesar
+    ├── config/
+    │   └── database.php    ← conexión mysqli con el usuario sgdm_app
     ├── controllers/
     │   └── xxxController.php
     └── models/
-        └── Xxx.php
+        ├── Xxx.php         ← clases del dominio
+        └── XxxRepositorio.php ← acceso a la base de esa entidad
 ```
 
 Convenciones:
@@ -56,7 +61,11 @@ Convenciones:
 - Los modelos son clases con atributos `private`, constructor, getters y la
   lógica de negocio. Una clase puede contener un objeto de otra clase
   (composición), con comentarios `#region ATRIBUTOS` / `#region FUNCIONES`.
-- Sin sesiones, sin routing, sin JavaScript salvo lo mínimo indispensable.
+- Sin routing, sin JavaScript salvo lo mínimo indispensable. Sesiones solo
+  las mínimas para que el inicio de sesión signifique algo (ver arriba).
+- El acceso a la base vive en clases de repositorio (`UsuarioRepositorio`),
+  separadas de las clases del dominio. Siempre con sentencias preparadas,
+  nunca concatenando SQL.
 - Nombres de archivo y de clase en español, sin tildes ni espacios.
 
 ## Paleta y tipografía (para lo que se muestre en pantalla)
@@ -126,13 +135,17 @@ encabezados.
       solo con estado `'inscripcion'`, y las transiciones `publicar()`,
       `comenzar()` y `finalizar()` en `Torneo`, que se suman a
       `cancelar()`.
-- [ ] Integración con PHP usando POO — mínimo gestión de usuarios
-      funcionando (alta, baja, login).
-      **Pendiente de esta etapa**: auditar con la regla de voz los ~40
-      mensajes de error que ya tienen los `validar()` de `apps/models/`,
-      más los que generen los controladores ("Usuario dado de alta", "No
-      se pudo guardar"). Nunca se revisaron con esa regla; hoy están en
-      infinitivo impersonal, que da la casualidad de que cumple.
+- [x] Integración con PHP usando POO — gestión de usuarios funcionando de
+      punta a punta: `apps/config/database.php` (mysqli con `sgdm_app`,
+      nunca root), `apps/models/UsuarioRepositorio.php` (alta, búsqueda,
+      modificación y baja lógica, todo con sentencias preparadas),
+      `apps/controllers/registroController.php` y `loginController.php`, y
+      `apps/index.php` como vista de resultado. Probado con navegador
+      contra MariaDB 10.11: alta, correo repetido rechazado, login correcto
+      y fallido, y la contraseña guardada solo como hash bcrypt.
+      **Pendiente todavía**: auditar con la regla de voz los ~40 mensajes
+      de error de los `validar()` de `apps/models/`. Los mensajes nuevos
+      del repositorio y de los controladores ya se escribieron en presente.
 - [ ] Configuración de Apache/entorno local (XAMPP).
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
