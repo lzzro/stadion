@@ -66,12 +66,44 @@ CSS ya definido en `public/css/style.css`: variables `--pent`, `--pario`,
 Jost (interfaz), GFS Didot (solo epígrafes en griego). No introducir otros
 colores ni fuentes sin que se pida explícitamente.
 
+## Motivos decorativos
+
+Regla definitiva: **un solo motivo por página, chico, al pie** (la firma de
+Agón del footer). La rama de olivo puede aparecer además donde marca a un
+vencedor real — el chip de estado `vencedor`, el conteo de kotinos del
+perfil —, pero nunca como decoración repetida dentro de tablas o
+encabezados.
+
+## Voz de la interfaz
+
+- Todo texto de interfaz va en **presente mítico**: sin pasado, sin comparar
+  con "la actualidad" o "hoy en día", sin sujeto explícito, estilo epígrafe.
+- Los epígrafes en griego quedan **sin traducir en pantalla**. La traducción
+  va en un documento aparte para los docentes, nunca inline ni en un tooltip.
+- **Frases prohibidas.** No usarlas en ningún texto nuevo:
+  - "Tres formatos, un solo motor", y en general la fórmula "tres X, un solo X".
+  - "con la calma de una tabla bien hecha".
+  - "vos elegís el formato; el resto lo hace el sistema".
+  - "acá cada torneo, grande o chico, se organiza con ese mismo cuidado".
+  - "No había medallas. Había una rama de olivo".
+- La pestaña de **Rendimiento físico** lleva solo nombre del indicador y
+  valor, sin explicar cómo se mide ni para qué sirve: esa explicación va en
+  el documento del profesor, no en la pantalla.
+
 ## Estado actual (actualizar esta sección a medida que se avanza)
 
 **Hecho:**
 - Maquetado HTML/CSS mobile-first de 6 páginas (inicio, torneos, detalle,
   perfil, crear, login) — primera entrega de Fullstack.
 - Identidad visual completa (Agón y Stadion).
+- Modo noche: segundo bloque de variables bajo `[data-theme="noche"]` en
+  `style.css` e interruptor fijo abajo a la derecha en las 6 páginas. El
+  único JavaScript del proyecto (`public/js/tema.js`) solo cambia el
+  atributo y guarda la preferencia; el resto lo resuelve el CSS.
+- Sistema de estados de torneo: chip reusable `.estado` con cinco
+  variantes (`en-vivo`, `inscripcion`, `en-juego`, `vencedor`, `cerrado`),
+  cada una con color **y** forma, aplicado en `torneos.html`, `torneo.html`
+  y `perfil.html`.
 
 **En curso — segunda entrega:**
 - [x] Modelo relacional normalizado + DDL — `sql/schema.sql`, 16 tablas en
