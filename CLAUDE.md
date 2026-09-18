@@ -42,6 +42,8 @@ stadion/
 ├── public/
 │   ├── index.html          ← vista de entrada / formulario
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
+├── docs/
+│   └── configuracion-apache.md  ← despliegue: virtual host y puesta en marcha
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
     ├── config/
@@ -156,7 +158,18 @@ dejaban ver interioridades del código.
       identificador de sesión, y todo queda en `auditoria`: `alta` y
       `login_ok` con el id del usuario, `login_error` con id en NULL y
       el correo intentado en el detalle.
-- [ ] Configuración de Apache/entorno local (XAMPP).
+- [~] Configuración de Apache/entorno local (XAMPP) — **procedimiento
+      documentado y verificado, falta aplicarlo en la máquina local**. El
+      paso a paso está en `docs/configuracion-apache.md`: virtual host
+      `stadion.local` con `DocumentRoot` en `public/`, más dos `Alias` (uno
+      para `apps/controllers`, que los formularios necesitan alcanzar por
+      HTTP, y otro para `/public`, que la vista de resultado usa para su
+      CSS). Probado sobre Apache 2.4.58 sirviendo este mismo proyecto.
+      Los tres archivos que hay que tocar (`httpd-vhosts.conf`,
+      `httpd.conf` y el `hosts` de Windows) viven en la máquina de Lucas,
+      fuera del repositorio, así que los edita él siguiendo el documento.
+      **Pendiente de confirmación docente**: los virtual hosts no figuran
+      entre los temas dados en Administración de SO.
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix/Grafana, SSL.
