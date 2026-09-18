@@ -153,9 +153,9 @@ dejaban ver interioridades del código.
       contra MariaDB 10.11: alta, correo repetido rechazado, login correcto
       y fallido, y la contraseña guardada solo como hash bcrypt.
       El alta asigna el rol `jugador` por defecto, el login regenera el
-      identificador de sesión, y cada intento de acceso queda en
-      `auditoria` (`login_ok` con el id del usuario, `login_error` con
-      id en NULL y el correo intentado en el detalle).
+      identificador de sesión, y todo queda en `auditoria`: `alta` y
+      `login_ok` con el id del usuario, `login_error` con id en NULL y
+      el correo intentado en el detalle.
 - [ ] Configuración de Apache/entorno local (XAMPP).
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
