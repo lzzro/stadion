@@ -78,6 +78,8 @@ encabezados.
 
 - Todo texto de interfaz va en **presente mítico**: sin pasado, sin comparar
   con "la actualidad" o "hoy en día", sin sujeto explícito, estilo epígrafe.
+  Vale para todo lo que llegue a la pantalla, no solo para el HTML: también
+  para los mensajes que devuelvan los modelos y los controladores.
 - Los epígrafes en griego quedan **sin traducir en pantalla**. La traducción
   va en un documento aparte para los docentes, nunca inline ni en un tooltip.
 - **Frases prohibidas.** No usarlas en ningún texto nuevo:
@@ -126,6 +128,11 @@ encabezados.
       `cancelar()`.
 - [ ] Integración con PHP usando POO — mínimo gestión de usuarios
       funcionando (alta, baja, login).
+      **Pendiente de esta etapa**: auditar con la regla de voz los ~40
+      mensajes de error que ya tienen los `validar()` de `apps/models/`,
+      más los que generen los controladores ("Usuario dado de alta", "No
+      se pudo guardar"). Nunca se revisaron con esa regla; hoy están en
+      infinitivo impersonal, que da la casualidad de que cumple.
 - [ ] Configuración de Apache/entorno local (XAMPP).
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
