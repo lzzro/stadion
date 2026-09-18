@@ -81,7 +81,10 @@ colores ni fuentes sin que se pida explícitamente.
       privilegio. **Pendiente de confirmación docente**: el DCL no se dio
       en clase, se incluyó porque lo exige la consigna (queda anotado en
       el propio archivo).
-- [ ] Modelos PHP alineados al modelo relacional.
+- [x] Modelos PHP alineados al modelo relacional — 15 clases en
+      `apps/models/`, una por tabla (las dos intermedias resueltas por
+      composición). Todavía no tocan la base: son las clases del
+      dominio.
 - [ ] Integración con PHP usando POO — mínimo gestión de usuarios
       funcionando (alta, baja, login).
 - [ ] Configuración de Apache/entorno local (XAMPP).
