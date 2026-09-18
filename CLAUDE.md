@@ -85,6 +85,13 @@ colores ni fuentes sin que se pida explícitamente.
       `apps/models/`, una por tabla (las dos intermedias resueltas por
       composición). Todavía no tocan la base: son las clases del
       dominio.
+      Correcciones posteriores: setter del `id` en las 12 clases que
+      tienen uno propio (para guardar el que genera el `AUTO_INCREMENT`),
+      `mb_strlen` en vez de `strlen` en los largos (en UTF-8 `strlen`
+      cuenta bytes y la base cuenta caracteres), `admiteInscripciones()`
+      solo con estado `'inscripcion'`, y las transiciones `publicar()`,
+      `comenzar()` y `finalizar()` en `Torneo`, que se suman a
+      `cancelar()`.
 - [ ] Integración con PHP usando POO — mínimo gestión de usuarios
       funcionando (alta, baja, login).
 - [ ] Configuración de Apache/entorno local (XAMPP).
