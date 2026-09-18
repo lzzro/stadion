@@ -100,6 +100,15 @@ encabezados.
 - La pestaña de **Rendimiento físico** lleva solo nombre del indicador y
   valor, sin explicar cómo se mide ni para qué sirve: esa explicación va en
   el documento del profesor, no en la pantalla.
+- **Nada de jerga del código en pantalla.** Los mensajes no nombran clases
+  (`objeto Usuario`), ni columnas (`el campo activo`), ni valores internos
+  (`0 o 1`), ni pasos técnicos (`preparar` una sentencia). Si un mensaje
+  solo tiene sentido para quien escribió el código, está mal escrito
+  aunque nunca llegue a verse.
+
+Los mensajes de `apps/models/` y `apps/controllers/` se auditaron con estas
+reglas: ninguno estaba en pasado ni usaba "vos", y se reescribieron 19 que
+dejaban ver interioridades del código.
 
 ## Estado actual (actualizar esta sección a medida que se avanza)
 
@@ -143,9 +152,10 @@ encabezados.
       `apps/index.php` como vista de resultado. Probado con navegador
       contra MariaDB 10.11: alta, correo repetido rechazado, login correcto
       y fallido, y la contraseña guardada solo como hash bcrypt.
-      **Pendiente todavía**: auditar con la regla de voz los ~40 mensajes
-      de error de los `validar()` de `apps/models/`. Los mensajes nuevos
-      del repositorio y de los controladores ya se escribieron en presente.
+      El alta asigna el rol `jugador` por defecto, el login regenera el
+      identificador de sesión, y cada intento de acceso queda en
+      `auditoria` (`login_ok` con el id del usuario, `login_error` con
+      id en NULL y el correo intentado en el detalle).
 - [ ] Configuración de Apache/entorno local (XAMPP).
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
