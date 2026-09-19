@@ -121,8 +121,12 @@ dejaban ver interioridades del código.
 ## Estado actual (actualizar esta sección a medida que se avanza)
 
 **Hecho:**
-- Maquetado HTML/CSS mobile-first de 6 páginas (inicio, torneos, detalle,
-  perfil, crear, login) — primera entrega de Fullstack.
+- Maquetado HTML/CSS mobile-first de 7 páginas (inicio, torneos, detalle,
+  perfil, crear, login, registro) — primera entrega de Fullstack. El
+  acceso quedó separado en dos: `login.html` solo inicia sesión y
+  `registro.html` solo da de alta, cada una con su panel de mármol y un
+  enlace a la otra. Toda cuenta nace con el rol `jugador`: en ninguna
+  pantalla se pregunta por el rol.
 - Identidad visual completa (Agón y Stadion).
 - Modo noche: segundo bloque de variables bajo `[data-theme="noche"]` en
   `style.css` e interruptor fijo abajo a la derecha en las 6 páginas. El
