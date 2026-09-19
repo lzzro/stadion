@@ -42,12 +42,14 @@ stadion/
 ├── public/
 │   ├── index.html          ← vista de entrada / formulario
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
+├── .gitignore              ← excluye la configuración con credenciales
 ├── docs/
 │   └── configuracion-apache.md  ← despliegue: virtual host y puesta en marcha
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
     ├── config/
-    │   └── database.php    ← conexión mysqli con el usuario sgdm_app
+    │   ├── database.php    ← conexión mysqli, sin credenciales
+    │   └── database.local.php.ejemplo  ← plantilla; la copia real no se versiona
     ├── controllers/
     │   └── xxxController.php
     └── models/
@@ -68,6 +70,10 @@ Convenciones:
 - El acceso a la base vive en clases de repositorio (`UsuarioRepositorio`),
   separadas de las clases del dominio. Siempre con sentencias preparadas,
   nunca concatenando SQL.
+- **Ninguna credencial real va al repositorio.** La contraseña de `sgdm_app`
+  vive en `apps/config/database.local.php`, que el `.gitignore` excluye;
+  `sql/schema.sql` y `database.php` llevan solo marcadores. En una copia
+  nueva se pone con un `ALTER USER` y copiando el `.ejemplo`.
 - Nombres de archivo y de clase en español, sin tildes ni espacios.
 
 ## Paleta y tipografía (para lo que se muestre en pantalla)

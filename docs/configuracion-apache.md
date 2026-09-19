@@ -33,7 +33,30 @@ las credenciales de la base**. El virtual host lo corta.
 - El proyecto clonado en una carpeta conocida. En la máquina de desarrollo
   actual es `D:\xampp\htdocs\stadion`.
 - La base `sgdm` creada con `sql/schema.sql` (ver ese archivo).
+- La contraseña de `sgdm_app` puesta y la configuración local creada
+  (ver la sección 2.1).
 - Permisos de administrador en Windows, **solo** para el paso 4.
+
+### 2.1 La contraseña de la base
+
+La contraseña real de `sgdm_app` **no está en el repositorio**, ni en
+`sql/schema.sql` ni en `apps/config/database.php`. En una copia nueva hay que
+ponerla en dos lados:
+
+1. **En la base**, una vez corrido `sql/schema.sql`, desde phpMyAdmin
+   (pestaña SQL) o desde la consola de MariaDB:
+
+   ```sql
+   ALTER USER 'sgdm_app'@'localhost' IDENTIFIED BY 'la-que-elijas';
+   ```
+
+2. **En la aplicación**: copiar `apps/config/database.local.php.ejemplo` como
+   `apps/config/database.local.php` (mismo directorio, sin el `.ejemplo`) y
+   escribir ahí esa misma contraseña.
+
+El `.gitignore` excluye `database.local.php`, así que nunca se sube. Si falta,
+la aplicación no adivina: avisa con *Falta la configuración local de la base
+de datos*.
 
 **La ruta del proyecto aparece cuatro veces en la configuración.** Si tu copia
 está en otro lado, cambiá las cuatro. En Apache la ruta se escribe con barras
@@ -258,7 +281,8 @@ Si el paso 2 da 404, falta el `Alias /apps/controllers`.
 | La página de resultado sin estilos | Falta `Alias /public` | Paso 3 |
 | Apache no arranca | Error de sintaxis, o el puerto 80 ocupado | Pasos 6 y 7 |
 | El navegador descarga el `.php` en vez de ejecutarlo | El módulo de PHP no está cargado | Revisar `LoadModule php_module` en `httpd.conf` |
-| `No hay conexión con la base de datos` | La clave de `sgdm_app` no coincide | Que `apps/config/database.php` y el `GRANT` de `sql/schema.sql` tengan la misma |
+| `Falta la configuración local de la base de datos` | No existe `apps/config/database.local.php` | Sección 2.1 |
+| `No hay conexión con la base de datos` | La clave de `sgdm_app` no coincide | Que `apps/config/database.local.php` y el `ALTER USER` tengan la misma |
 
 ---
 
