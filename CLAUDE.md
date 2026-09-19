@@ -164,16 +164,17 @@ dejaban ver interioridades del código.
       identificador de sesión, y todo queda en `auditoria`: `alta` y
       `login_ok` con el id del usuario, `login_error` con id en NULL y
       el correo intentado en el detalle.
-- [~] Configuración de Apache/entorno local (XAMPP) — **procedimiento
-      documentado y verificado, falta aplicarlo en la máquina local**. El
-      paso a paso está en `docs/configuracion-apache.md`: virtual host
-      `stadion.local` con `DocumentRoot` en `public/`, más dos `Alias` (uno
-      para `apps/controllers`, que los formularios necesitan alcanzar por
-      HTTP, y otro para `/public`, que la vista de resultado usa para su
-      CSS). Probado sobre Apache 2.4.58 sirviendo este mismo proyecto.
-      Los tres archivos que hay que tocar (`httpd-vhosts.conf`,
-      `httpd.conf` y el `hosts` de Windows) viven en la máquina de Lucas,
-      fuera del repositorio, así que los edita él siguiendo el documento.
+- [x] Configuración de Apache/entorno local (XAMPP) — **aplicada y
+      funcionando**: `stadion.local` sirve el sitio, el inicio de sesión
+      anda desde ahí, y `apps/config/database.php` no se entrega al
+      pedirlo por URL. El paso a paso está en
+      `docs/configuracion-apache.md`: virtual host con `DocumentRoot` en
+      `public/`, más dos `Alias` (uno para `apps/controllers`, que los
+      formularios necesitan alcanzar por HTTP, y otro para `/public`, que
+      la vista de resultado usa para su CSS).
+      Los tres archivos que se tocan (`httpd-vhosts.conf`, `httpd.conf` y
+      el `hosts` de Windows) viven en la máquina de Lucas, fuera del
+      repositorio: si se reinstala, se repiten los pasos del documento.
       **Pendiente de confirmación docente**: los virtual hosts no figuran
       entre los temas dados en Administración de SO.
 
