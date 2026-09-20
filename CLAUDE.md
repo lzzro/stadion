@@ -46,13 +46,19 @@ stadion/
 ├── .gitignore              ← excluye credenciales, respaldos y métricas
 ├── docs/
 │   ├── configuracion-apache.md  ← despliegue: virtual host y puesta en marcha
-│   └── respaldos-cron.md   ← cron, respaldos y la decisión sobre Grafana
+│   ├── respaldos-cron.md   ← cron, respaldos y la decisión sobre Grafana
+│   └── deploy-hosting-compartido.md  ← subida a cPanel, paso a paso
 ├── scripts/
 │   ├── respaldo.sh         ← respaldo diario: base + apps/ + public/
 │   ├── metricas.sh         ← lectura de disco, memoria y servicios
+│   ├── armar-deploy.sh     ← rehace deploy/ desde public/ y apps/
 │   └── respaldo.local.cnf.ejemplo  ← plantilla; la copia real no se versiona
+├── deploy/hosting-compartido/  ← GENERADO, no editar a mano
+│   ├── public_html/        ← lo único que el hosting publica
+│   └── stadion_app/        ← la aplicación, fuera del alcance web
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
+    ├── perfil.php          ← vista de perfil, con los datos de la base
     ├── config/
     │   ├── database.php    ← conexión mysqli, sin credenciales
     │   ├── database.local.php.ejemplo  ← plantilla; la copia real no se versiona
@@ -74,6 +80,14 @@ Convenciones:
   (composición), con comentarios `#region ATRIBUTOS` / `#region FUNCIONES`.
 - Sin routing, sin JavaScript salvo lo mínimo indispensable. Sesiones solo
   las mínimas para que el inicio de sesión signifique algo (ver arriba).
+- Los `require_once` de los controladores van con `__DIR__` adelante, no
+  con rutas relativas sueltas. Es lo que permite que el mismo controlador
+  ande llamado directo (en XAMPP) o desde un puente del hosting, sin
+  depender de desde qué carpeta lo llamaron.
+- Las direcciones que salen en pantalla (CSS, JS, enlaces) no van escritas
+  a mano en las vistas: salen de `$ruta_publica`, que el punto de entrada
+  deja preparada. La profundidad del sitio cambia entre la instalación
+  local y el hosting, el archivo no.
 - El acceso a la base vive en clases de repositorio (`UsuarioRepositorio`),
   separadas de las clases del dominio. Siempre con sentencias preparadas,
   nunca concatenando SQL.
@@ -232,6 +246,35 @@ dejaban ver interioridades del código.
       (tabla en MariaDB + origen MySQL nativo), están en el documento.
       **Pendiente de confirmación docente**: SELinux, que aparece solo si el
       proyecto queda fuera de `/var/www`.
+- [x] Perfil real y preparación para hosting compartido —
+      `apps/controllers/perfilController.php` con su vista
+      `apps/perfil.php`: muestra nombre, apellido, correo, alias,
+      presentación, fecha de alta y roles, todo leído de la base con
+      `buscarPorId()` y el nuevo `cargarRoles()`. El formulario guarda de
+      verdad con `actualizarPerfil()` y deja una fila `modificacion` en
+      `auditoria`. Es la **primera pantalla que exige sesión iniciada**, así
+      que estrena `sesionVigente()`: sin sesión, o con la marca vencida,
+      redirige a `login.html`.
+      Quien edita es siempre el id de la sesión: un `id_usuario` mandado
+      por POST se descarta (probado, no toca la otra cuenta). El correo y
+      la contraseña no se editan desde ahí.
+      `public/perfil.html` queda solo como maqueta: no la enlaza ninguna
+      página, y en la copia de deploy se reemplaza por un desvío al perfil
+      real, para no publicar datos inventados. Los contadores de torneos,
+      finales y kotinos no están en la vista real: todavía no hay torneos
+      en la base.
+      **Copia para hosting compartido**: `deploy/hosting-compartido/`, que
+      **genera `scripts/armar-deploy.sh`** a partir de `public/` y `apps/`
+      (no se edita a mano, o se desincroniza). Queda partida en
+      `public_html/` y `stadion_app/`, esta última fuera de lo que el
+      servidor publica, con tres puentes de pocas líneas en
+      `public_html/controllers/`. Probado con Apache de verdad: todo lo de
+      `stadion_app/` responde 404, incluidos los intentos de salirse con
+      `../`. El script comprueba que la configuración local con la
+      contraseña real no se cuele en la copia.
+      El paso a paso de cPanel está en `docs/deploy-hosting-compartido.md`,
+      listo para aplicar a mano. **Pendiente de confirmación docente**: SSL,
+      que figura en la tercera entrega.
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.
