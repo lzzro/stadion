@@ -42,6 +42,8 @@ Lo dado en clase, por materia:
 stadion/
 ├── public/
 │   ├── index.html          ← vista de entrada / formulario
+│   ├── calendario.html  llave.html  rendimiento.html  ← maquetado
+│   ├── panel.html  admin.html       ← paneles de organizador y de sistema
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
 ├── .gitignore              ← excluye credenciales, respaldos y métricas
 ├── docs/
@@ -134,7 +136,13 @@ encabezados.
   - "No había medallas. Había una rama de olivo".
 - La pestaña de **Rendimiento físico** lleva solo nombre del indicador y
   valor, sin explicar cómo se mide ni para qué sirve: esa explicación va en
-  el documento del profesor, no en la pantalla.
+  el documento del profesor, no en la pantalla. La única excepción pedida es
+  la nota de instrumentos al pie, que nombra con qué se mide sin explicar
+  cómo.
+- **El registro de auditoría se escribe en sustantivos, no en pasado**
+  (`Carga de resultado`, no `cargó resultado`). Un historial narrado en
+  pasado rompe la regla de voz; en sustantivo queda en el mismo tono de
+  epígrafe que el resto.
 - **Nada de jerga del código en pantalla.** Los mensajes no nombran clases
   (`objeto Usuario`), ni columnas (`el campo activo`), ni valores internos
   (`0 o 1`), ni pasos técnicos (`preparar` una sentencia). Si un mensaje
@@ -163,6 +171,24 @@ dejaban ver interioridades del código.
   variantes (`en-vivo`, `inscripcion`, `en-juego`, `vencedor`, `cerrado`),
   cada una con color **y** forma, aplicado en `torneos.html`, `torneo.html`
   y `perfil.html`.
+- Cinco páginas más de maquetado estático, con la misma cabecera, el mismo
+  pie y el mismo modo noche desde el primer commit: `calendario.html`
+  (agenda de la semana por día), `llave.html` (eliminación directa de 16,
+  apilada en el teléfono y en cuatro columnas con líneas desde 1024 px),
+  `rendimiento.html` (tres indicadores de Física y la evolución del tiempo
+  de reacción en un SVG), `panel.html` (panel del organizador) y
+  `admin.html` (usuarios, módulos y registro de auditoría). Ninguna toca
+  `apps/` ni la base: llevan los datos de ejemplo escritos a mano.
+  La navegación compartida apunta ahora a destinos que existen:
+  Calendario → `calendario.html`, Posiciones → `torneo.html#posiciones`,
+  Organizadores → `panel.html`.
+- **Corregido de paso**: el maquetado desbordaba a lo ancho en
+  `torneo.html`, `crear.html` y `perfil.html` (barra horizontal en el
+  teléfono). La causa estaba en el CSS compartido: dentro de un grid o un
+  flex, un hijo no puede achicarse por debajo de su contenido, así que una
+  tabla ancha estiraba la página entera. Resuelto con `min-width: 0` en las
+  zonas del grid y sus hijos; ahora la tabla se desplaza dentro de su propio
+  marco. Las 12 páginas quedan sin desborde en 390, 768 y 1024 px.
 
 **En curso — segunda entrega:**
 - [x] Modelo relacional normalizado + DDL — `sql/schema.sql`, 16 tablas en
