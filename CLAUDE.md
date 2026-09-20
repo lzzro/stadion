@@ -49,7 +49,8 @@ stadion/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
     ├── config/
     │   ├── database.php    ← conexión mysqli, sin credenciales
-    │   └── database.local.php.ejemplo  ← plantilla; la copia real no se versiona
+    │   ├── database.local.php.ejemplo  ← plantilla; la copia real no se versiona
+    │   └── sesion.php      ← vigencia de la sesión (30 min de inactividad)
     ├── controllers/
     │   └── xxxController.php
     └── models/
@@ -181,6 +182,22 @@ dejaban ver interioridades del código.
       repositorio: si se reinstala, se repiten los pasos del documento.
       **Pendiente de confirmación docente**: los virtual hosts no figuran
       entre los temas dados en Administración de SO.
+- [x] Ciberseguridad: expiración de sesión — `apps/config/sesion.php`.
+      Cierra la sesión tras **30 minutos (1800 s) sin actividad**, con
+      ventana corrediza: cada paso renueva la marca, así que el límite
+      se cuenta desde la última actividad y no desde el inicio de
+      sesión. `loginController.php` guarda `$_SESSION['ultima_actividad']`
+      al entrar; `sesionVigente()` compara, y si se pasó hace
+      `session_unset()` y `session_destroy()`.
+      Todavía no hay ninguna vista que exija sesión iniciada, así que la
+      función queda lista pero sin aplicar. Probada con los dos casos
+      simulados (marca vieja → se destruye; marca reciente → se mantiene
+      y se actualiza), los bordes de los 1800 s, y por HTTP con tres
+      pedidos de 29 minutos seguidos que no vencen la sesión y uno de 31
+      que sí la cierra.
+      Con esto queda cerrado el ítem de Ciberseguridad que estaba
+      parcial: `password_hash` ya estaba, y ahora también el cierre por
+      inactividad.
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix/Grafana, SSL.
