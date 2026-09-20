@@ -30,8 +30,9 @@ Lo dado en clase, por materia:
 - **Administración de SO**: AlmaLinux 8.10 minimal (la VM del instituto
   trae Apache 2.4, PHP 8.3, MariaDB 10.11), comandos de administración,
   `useradd`/`usermod`/`passwd`, permisos octales, expresiones regulares,
-  scripts en bash con menú (`case`). Cron y monitoreo no se dieron en
-  clase; se implementan igual con la misma nota.
+  scripts en bash con menú (`case`). Cron, respaldos por script y
+  monitoreo no se dieron en clase, pero el docente los **confirmó** para
+  la segunda entrega.
 - **Ciberseguridad**: `password_hash`, firewall, fail2ban — confirmados con
   la docente (Andrea Barbas).
 
@@ -42,9 +43,14 @@ stadion/
 ├── public/
 │   ├── index.html          ← vista de entrada / formulario
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
-├── .gitignore              ← excluye la configuración con credenciales
+├── .gitignore              ← excluye credenciales, respaldos y métricas
 ├── docs/
-│   └── configuracion-apache.md  ← despliegue: virtual host y puesta en marcha
+│   ├── configuracion-apache.md  ← despliegue: virtual host y puesta en marcha
+│   └── respaldos-cron.md   ← cron, respaldos y la decisión sobre Grafana
+├── scripts/
+│   ├── respaldo.sh         ← respaldo diario: base + apps/ + public/
+│   ├── metricas.sh         ← lectura de disco, memoria y servicios
+│   └── respaldo.local.cnf.ejemplo  ← plantilla; la copia real no se versiona
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
     ├── config/
@@ -74,7 +80,13 @@ Convenciones:
 - **Ninguna credencial real va al repositorio.** La contraseña de `sgdm_app`
   vive en `apps/config/database.local.php`, que el `.gitignore` excluye;
   `sql/schema.sql` y `database.php` llevan solo marcadores. En una copia
-  nueva se pone con un `ALTER USER` y copiando el `.ejemplo`.
+  nueva se pone con un `ALTER USER` y copiando el `.ejemplo`. Lo mismo
+  para `sgdm_admin`, cuya contraseña vive en `scripts/respaldo.local.cnf`
+  (también excluido): el script de respaldo se niega a arrancar si ese
+  archivo no está en modo 600.
+- Lo que generan los scripts (`backups/`, `metricas/`) tampoco se versiona:
+  un respaldo lleva adentro datos personales y la configuración con la
+  contraseña de la base.
 - Nombres de archivo y de clase en español, sin tildes ni espacios.
 
 ## Paleta y tipografía (para lo que se muestre en pantalla)
@@ -198,9 +210,31 @@ dejaban ver interioridades del código.
       Con esto queda cerrado el ítem de Ciberseguridad que estaba
       parcial: `password_hash` ya estaba, y ahora también el cierre por
       inactividad.
+- [x] Administración de SO: respaldos, cron y monitoreo — **confirmado con
+      el docente**. Todo documentado en `docs/respaldos-cron.md`, listo para
+      aplicar a mano por SSH en la VM; nada se instala solo desde el
+      repositorio.
+      `scripts/respaldo.sh` deja un `.tar.gz` por día en `backups/` con el
+      volcado de `sgdm` (usuario `sgdm_admin`, contraseña vía
+      `--defaults-extra-file` para que no se vea en un `ps aux`) más `apps/`
+      y `public/`. Sin rotación, que es lo que se confirmó. Vuelca primero y
+      comprime después, así un fallo de la base no pisa el respaldo del día
+      anterior. Probado de punta a punta, **incluida la restauración**: el
+      volcado levanta las 16 tablas con sus datos.
+      `scripts/metricas.sh` anota cada 5 minutos disco, memoria y estado de
+      `httpd` y `mariadb` en `metricas/metricas.csv`.
+      **Decisión de monitoreo**: se descartó Prometheus + node_exporter
+      (tres servicios para vigilar una sola VM de 1 núcleo y 4 GB). También
+      se descartó el plugin de CSV de Grafana, que está deprecado y pierde
+      soporte el 1/2/2027. Queda: el CSV publicado por el Apache que ya está
+      andando, en `localhost` y con `Require local`, leído por el plugin
+      Infinity. El porqué de cada descarte, y la alternativa sin plugins
+      (tabla en MariaDB + origen MySQL nativo), están en el documento.
+      **Pendiente de confirmación docente**: SELinux, que aparece solo si el
+      proyecto queda fuera de `/var/www`.
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
-Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix/Grafana, SSL.
+Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.
 
 ## Cómo avisar cambios
 
