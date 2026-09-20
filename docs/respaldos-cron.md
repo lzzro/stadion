@@ -326,8 +326,10 @@ La columna **vacía** es un tercer estado a propósito, distinto del `0`. Un
 averiguó nada, y poner un `0` ahí sería una alarma falsa: mandaría a revisar
 Apache un domingo por un problema que está en otro lado.
 
-El costo de esto es **un proceso de bash de una décima de segundo cada 5
-minutos**, y nada corriendo el resto del tiempo. El archivo crece unos
+El costo de esto es **un proceso de bash que tarda unas centésimas de
+segundo, cada 5 minutos**, y nada corriendo el resto del tiempo. Medido:
+22 milisegundos por lectura. En la VM, con un `systemd` de verdad que
+responder, va a ser algo más, pero del mismo orden. El archivo crece unos
 **9 KB por día**, alrededor de **3,3 MB al año**.
 
 ### Cómo lee Grafana ese archivo
@@ -617,6 +619,7 @@ MariaDB 10.11, GNU tar 1.35 y Apache 2.4:
 - La cabecera se escribe una sola vez, no una por corrida.
 - Igual que el otro, anda con ruta absoluta desde otra carpeta y con el
   entorno de cron.
+- Tarda 22 milisegundos por lectura (10 corridas seguidas: 0,20 s).
 
 **El bloque de Apache de la sección 7**
 
