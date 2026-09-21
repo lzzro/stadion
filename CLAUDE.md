@@ -82,6 +82,15 @@ Convenciones:
   (composición), con comentarios `#region ATRIBUTOS` / `#region FUNCIONES`.
 - Sin routing, sin JavaScript salvo lo mínimo indispensable. Sesiones solo
   las mínimas para que el inicio de sesión signifique algo (ver arriba).
+- **El menú compartido no tiene lógica: la marca `class="activo"` va escrita
+  a mano en cada página.** Cada una marca la entrada de la que es destino:
+  `index.html` → Inicio, `torneos.html` → Torneos, `calendario.html` →
+  Calendario, `torneo.html` → Posiciones (es el destino exacto del enlace),
+  `crear.html` y `panel.html` → Organizadores. Las que no cuelgan de ninguna
+  entrada (`perfil.html`, `rendimiento.html`) no marcan ninguna, y
+  `llave.html`, que es el detalle de otro torneo, marca Torneos.
+  `panel.html` y `admin.html` reemplazan el menú compartido por el suyo.
+  Al agregar una página, marcar su entrada acá también.
 - Los `require_once` de los controladores van con `__DIR__` adelante, no
   con rutas relativas sueltas. Es lo que permite que el mismo controlador
   ande llamado directo (en XAMPP) o desde un puente del hosting, sin
@@ -171,6 +180,16 @@ dejaban ver interioridades del código.
   variantes (`en-vivo`, `inscripcion`, `en-juego`, `vencedor`, `cerrado`),
   cada una con color **y** forma, aplicado en `torneos.html`, `torneo.html`
   y `perfil.html`.
+- Pestañas que cambian de contenido **sin JavaScript**, estrenadas en
+  `torneo.html` con Posiciones y Participantes. Cada vista es un bloque con
+  su id y su propia barra de pestañas; el selector `:target` muestra la que
+  coincide con el ancla de la dirección. Participantes va primero en el HTML
+  y arranca oculta, para que el combinador `~` pueda apagar a Posiciones,
+  que viene después: un selector no puede volver hacia atrás. Sin ancla se
+  ve Posiciones, que es la vista por defecto.
+  **Pendiente de confirmación docente**: `:target` no figura entre los temas
+  de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
+  y además el proyecto evita por regla (queda anotado en `style.css`).
 - Cinco páginas más de maquetado estático, con la misma cabecera, el mismo
   pie y el mismo modo noche desde el primer commit: `calendario.html`
   (agenda de la semana por día), `llave.html` (eliminación directa de 16,
