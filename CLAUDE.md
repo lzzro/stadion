@@ -180,13 +180,17 @@ dejaban ver interioridades del código.
   variantes (`en-vivo`, `inscripcion`, `en-juego`, `vencedor`, `cerrado`),
   cada una con color **y** forma, aplicado en `torneos.html`, `torneo.html`
   y `perfil.html`.
-- Pestañas que cambian de contenido **sin JavaScript**, estrenadas en
-  `torneo.html` con Posiciones y Participantes. Cada vista es un bloque con
-  su id y su propia barra de pestañas; el selector `:target` muestra la que
-  coincide con el ancla de la dirección. Participantes va primero en el HTML
-  y arranca oculta, para que el combinador `~` pueda apagar a Posiciones,
-  que viene después: un selector no puede volver hacia atrás. Sin ancla se
-  ve Posiciones, que es la vista por defecto.
+- Pestañas que cambian de contenido **sin JavaScript**, en `torneo.html`:
+  Posiciones, Participantes y Reglas. Cada vista es un bloque con su id y su
+  propia barra de pestañas; el selector `:target` muestra la que coincide con
+  el ancla de la dirección. **Regla al agregar una pestaña nueva**: la vista
+  por defecto (Posiciones) va **última** en el HTML y arranca visible; todas
+  las demás van antes y arrancan ocultas, para que el combinador `~` pueda
+  apagar a la de por defecto, que viene después — un selector no puede volver
+  hacia atrás. A las otras ocultas no hace falta apagarlas: solo se prende la
+  que coincide con el ancla, y ancla hay una sola. Sin ancla se ve Posiciones.
+  El puntaje que muestra Reglas (3/1/0) es el mismo que traen por defecto
+  `ConfiguracionTorneo` y la tabla `configuracion_torneo`.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
