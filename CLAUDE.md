@@ -82,15 +82,23 @@ Convenciones:
   (composición), con comentarios `#region ATRIBUTOS` / `#region FUNCIONES`.
 - Sin routing, sin JavaScript salvo lo mínimo indispensable. Sesiones solo
   las mínimas para que el inicio de sesión signifique algo (ver arriba).
-- **El menú compartido no tiene lógica: la marca `class="activo"` va escrita
-  a mano en cada página.** Cada una marca la entrada de la que es destino:
-  `index.html` → Inicio, `torneos.html` → Torneos, `calendario.html` →
-  Calendario, `torneo.html` → Posiciones (es el destino exacto del enlace),
+- **La marca `class="activo"` del menú compartido va escrita a mano en cada
+  página.** Cada una marca la entrada de la que es destino: `index.html` →
+  Inicio, `torneos.html` → Torneos, `calendario.html` → Calendario,
   `crear.html` y `panel.html` → Organizadores. Las que no cuelgan de ninguna
   entrada (`perfil.html`, `rendimiento.html`) no marcan ninguna, y
-  `llave.html`, que es el detalle de otro torneo, marca Torneos.
+  `llave.html`, que es el detalle de un torneo, marca Torneos.
   `panel.html` y `admin.html` reemplazan el menú compartido por el suyo.
   Al agregar una página, marcar su entrada acá también.
+  **La excepción es `torneo.html`**, donde la misma dirección muestra una
+  pestaña u otra según el ancla: ahí no hay marca escrita a mano, la pone el
+  CSS. Sin ancla es el detalle de un torneo y marca Torneos, igual que
+  `llave.html`; con `#posiciones` marca Posiciones, que es a donde apunta
+  ese enlace del menú. El gancho es la clase `ficha-torneo` en su `.pagina`.
+  **Pendiente de confirmación docente**: esa regla usa `:has()`, que no
+  figura entre los temas de clase. El combinador `~` de las pestañas no
+  servía, porque el bloque de posiciones no es hermano del menú sino nieto
+  de `.pagina` (queda explicado en `style.css`).
 - Los `require_once` de los controladores van con `__DIR__` adelante, no
   con rutas relativas sueltas. Es lo que permite que el mismo controlador
   ande llamado directo (en XAMPP) o desde un puente del hosting, sin
