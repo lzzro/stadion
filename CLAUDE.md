@@ -181,16 +181,24 @@ dejaban ver interioridades del código.
   cada una con color **y** forma, aplicado en `torneos.html`, `torneo.html`
   y `perfil.html`.
 - Pestañas que cambian de contenido **sin JavaScript**, en `torneo.html`:
-  Posiciones, Participantes y Reglas. Cada vista es un bloque con su id y su
-  propia barra de pestañas; el selector `:target` muestra la que coincide con
-  el ancla de la dirección. **Regla al agregar una pestaña nueva**: la vista
-  por defecto (Posiciones) va **última** en el HTML y arranca visible; todas
-  las demás van antes y arrancan ocultas, para que el combinador `~` pueda
-  apagar a la de por defecto, que viene después — un selector no puede volver
-  hacia atrás. A las otras ocultas no hace falta apagarlas: solo se prende la
-  que coincide con el ancla, y ancla hay una sola. Sin ancla se ve Posiciones.
+  las cinco andan — Resumen, Calendario (el de **este** torneo, no el del
+  sitio, que es `calendario.html`), Posiciones, Participantes y Reglas. Cada
+  vista es un bloque con su id y su propia barra de pestañas; el selector
+  `:target` muestra la que coincide con el ancla de la dirección.
+  **Regla al agregar una pestaña nueva**: la vista por defecto va **última**
+  en el HTML y arranca visible; todas las demás van antes y arrancan ocultas,
+  para que el combinador `~` pueda apagar a la de por defecto, que viene
+  después — un selector no puede volver hacia atrás. A las otras ocultas no
+  hace falta apagarlas: solo se prende la que coincide con el ancla, y ancla
+  hay una sola. Cambiar cuál es la vista por defecto es mover su bloque al
+  final y correr los nombres de las tres reglas del CSS, nada más.
+  **Sin ancla se ve Resumen.** `torneo.html#posiciones`, que es a donde
+  apunta el menú compartido, sigue abriendo Posiciones (probado desde las
+  cinco páginas que tienen ese menú).
   El puntaje que muestra Reglas (3/1/0) es el mismo que traen por defecto
-  `ConfiguracionTorneo` y la tabla `configuracion_torneo`.
+  `ConfiguracionTorneo` y la tabla `configuracion_torneo`, y la ronda en
+  curso que muestran Resumen y Calendario es la 8, que es la que se deduce
+  de los `PJ = 7` de la tabla de posiciones y de `calendario.html`.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
