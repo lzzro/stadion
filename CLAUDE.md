@@ -97,7 +97,8 @@ Convenciones:
   igual que `llave.html`; con `#posiciones` marca Posiciones, que es a
   donde apunta ese enlace del menú. El gancho es la clase `ficha-torneo`.
   En `panel.html` el menú es el suyo propio y hace de barra de pestañas:
-  sin ancla marca Resumen, con `#mis-torneos` marca Mis torneos. El gancho
+  sin ancla marca Resumen, con `#mis-torneos` marca Mis torneos y con
+  `#resultados` marca Resultados. El gancho
   es la clase `panel-organizador`.
   **Pendiente de confirmación docente**: las dos reglas usan `:has()`, que
   no figura entre los temas de clase. El combinador `~` de las pestañas no
@@ -212,10 +213,17 @@ dejaban ver interioridades del código.
   curso que muestran Resumen y Calendario es la 8, que es la que se deduce
   de los `PJ = 7` de la tabla de posiciones y de `calendario.html`.
   **La misma mecánica está en `panel.html`**, con Resumen (por defecto, va
-  última) y Mis torneos. Ahí el conmutador es el menú propio del panel, no
-  una barra `.pestanas`. Mis torneos es la versión completa de la tabla del
-  Resumen: los mismos cuatro torneos, más disciplina y fecha de inicio, sin
-  ninguna acción conectada.
+  última), Mis torneos y Resultados. Ahí el conmutador es el menú propio del
+  panel, no una barra `.pestanas`. Mis torneos es la versión completa de la
+  tabla del Resumen: los mismos cuatro torneos, más disciplina y fecha de
+  inicio, sin ninguna acción conectada. Resultados es la versión completa de
+  "Resultados pendientes de carga": la ronda 3 del Abierto de Tenis de Mesa
+  entera (12 mesas: 7 marcadores al mejor de 5 y 5 pendientes, entre ellos
+  los dos del Resumen) y los dos cruces de la final de la Copa de Verano.
+  "Publicar ronda 3 →" aparece apagado (`.enlace-apagado`, sin enlace) junto
+  a la nota de los marcadores que faltan. Ningún "Cargar" hace nada.
+  **Pendiente de decisión**: el KPI "Resultados pendientes" del Resumen dice
+  12, y la pestaña suma 5 + 2 = 7.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
