@@ -218,12 +218,14 @@ dejaban ver interioridades del código.
   tabla del Resumen: los mismos cuatro torneos, más disciplina y fecha de
   inicio, sin ninguna acción conectada. Resultados es la versión completa de
   "Resultados pendientes de carga": la ronda 3 del Abierto de Tenis de Mesa
-  entera (12 mesas: 7 marcadores al mejor de 5 y 5 pendientes, entre ellos
-  los dos del Resumen) y los dos cruces de la final de la Copa de Verano.
-  "Publicar ronda 3 →" aparece apagado (`.enlace-apagado`, sin enlace) junto
-  a la nota de los marcadores que faltan. Ningún "Cargar" hace nada.
-  **Pendiente de decisión**: el KPI "Resultados pendientes" del Resumen dice
-  12, y la pestaña suma 5 + 2 = 7.
+  entera (12 mesas: 7 marcadores al mejor de 5, 4 pendientes de carga —
+  entre ellos los dos del Resumen — y J. Alonso vs M. Bravo programado a
+  las 21:00, que a las 17:42 del panel todavía no se juega) y los dos
+  cruces de la final de la Copa de Verano. El KPI "Resultados pendientes"
+  cuenta solo pendientes de carga: 4 + 2 = 6; el programado no suma.
+  "Publicar ronda 3 →" aparece apagado (`.enlace-apagado`, sin enlace) en
+  la pestaña y en el Resumen, con la misma nota: "Faltan 5 marcadores",
+  los 4 pendientes más el partido por jugar. Ningún "Cargar" hace nada.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
