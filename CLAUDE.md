@@ -90,15 +90,19 @@ Convenciones:
   `llave.html`, que es el detalle de un torneo, marca Torneos.
   `panel.html` y `admin.html` reemplazan el menú compartido por el suyo.
   Al agregar una página, marcar su entrada acá también.
-  **La excepción es `torneo.html`**, donde la misma dirección muestra una
-  pestaña u otra según el ancla: ahí no hay marca escrita a mano, la pone el
-  CSS. Sin ancla es el detalle de un torneo y marca Torneos, igual que
-  `llave.html`; con `#posiciones` marca Posiciones, que es a donde apunta
-  ese enlace del menú. El gancho es la clase `ficha-torneo` en su `.pagina`.
-  **Pendiente de confirmación docente**: esa regla usa `:has()`, que no
-  figura entre los temas de clase. El combinador `~` de las pestañas no
-  servía, porque el bloque de posiciones no es hermano del menú sino nieto
-  de `.pagina` (queda explicado en `style.css`).
+  **Las excepciones son las dos páginas con pestañas**, donde la misma
+  dirección muestra una vista u otra según el ancla: ahí no hay marca
+  escrita a mano, la pone el CSS.
+  En `torneo.html`, sin ancla es el detalle de un torneo y marca Torneos,
+  igual que `llave.html`; con `#posiciones` marca Posiciones, que es a
+  donde apunta ese enlace del menú. El gancho es la clase `ficha-torneo`.
+  En `panel.html` el menú es el suyo propio y hace de barra de pestañas:
+  sin ancla marca Resumen, con `#mis-torneos` marca Mis torneos. El gancho
+  es la clase `panel-organizador`.
+  **Pendiente de confirmación docente**: las dos reglas usan `:has()`, que
+  no figura entre los temas de clase. El combinador `~` de las pestañas no
+  servía en ninguna de las dos, porque el menú es hijo de `.pagina` y las
+  vistas son nietas (queda explicado en `style.css`).
 - Los `require_once` de los controladores van con `__DIR__` adelante, no
   con rutas relativas sueltas. Es lo que permite que el mismo controlador
   ande llamado directo (en XAMPP) o desde un puente del hosting, sin
@@ -207,6 +211,11 @@ dejaban ver interioridades del código.
   `ConfiguracionTorneo` y la tabla `configuracion_torneo`, y la ronda en
   curso que muestran Resumen y Calendario es la 8, que es la que se deduce
   de los `PJ = 7` de la tabla de posiciones y de `calendario.html`.
+  **La misma mecánica está en `panel.html`**, con Resumen (por defecto, va
+  última) y Mis torneos. Ahí el conmutador es el menú propio del panel, no
+  una barra `.pestanas`. Mis torneos es la versión completa de la tabla del
+  Resumen: los mismos cuatro torneos, más disciplina y fecha de inicio, sin
+  ninguna acción conectada.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
