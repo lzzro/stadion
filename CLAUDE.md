@@ -254,9 +254,9 @@ dejaban ver interioridades del código.
   dicen "A definir en cada torneo"). Todo va dentro de un `fieldset`
   con `disabled`, los booleanos con la `llave-visual` de Módulos del
   sistema, y "Guardar" apagado como "Publicar ronda 3".
-  **Diferencia sin tocar**: `crear.html` trae "Clasifican a playoffs"
-  preseleccionado en 4, y el valor por defecto del código y del schema
-  es 0.
+  `crear.html` quedó alineado con esos valores: "Clasifican a playoffs"
+  viene en "Ninguno" (valor 0), y los puntos por victoria van de 1 a 10
+  tanto en el formulario como en `validar()`.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
@@ -297,7 +297,11 @@ dejaban ver interioridades del código.
       cuenta bytes y la base cuenta caracteres), `admiteInscripciones()`
       solo con estado `'inscripcion'`, y las transiciones `publicar()`,
       `comenzar()` y `finalizar()` en `Torneo`, que se suman a
-      `cancelar()`.
+      `cancelar()`. `ConfiguracionTorneo::validar()` exige de 1 a 10
+      puntos por victoria (antes de 0 a 10), igual que `crear.html`.
+      `sql/schema.sql` no tiene CHECK de rango para ese campo (solo
+      `ck_config_pts`, el orden victoria ≥ empate ≥ derrota), así que la
+      base acepta 0 y también más de 10: el rango lo controla el modelo.
 - [x] Integración con PHP usando POO — gestión de usuarios funcionando de
       punta a punta: `apps/config/database.php` (mysqli con `sgdm_app`,
       nunca root), `apps/models/UsuarioRepositorio.php` (alta, búsqueda,
