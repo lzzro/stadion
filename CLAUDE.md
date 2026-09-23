@@ -98,7 +98,8 @@ Convenciones:
   donde apunta ese enlace del menú. El gancho es la clase `ficha-torneo`.
   En `panel.html` el menú es el suyo propio y hace de barra de pestañas:
   sin ancla marca Resumen, y con `#mis-torneos`, `#participantes`,
-  `#resultados` o `#reportes` marca la entrada del mismo nombre. El gancho
+  `#resultados`, `#reportes` o `#configuracion` marca la entrada del mismo
+  nombre. El gancho
   es la clase `panel-organizador`.
   **Pendiente de confirmación docente**: las dos reglas usan `:has()`, que
   no figura entre los temas de clase. El combinador `~` de las pestañas no
@@ -213,7 +214,8 @@ dejaban ver interioridades del código.
   curso que muestran Resumen y Calendario es la 8, que es la que se deduce
   de los `PJ = 7` de la tabla de posiciones y de `calendario.html`.
   **La misma mecánica está en `panel.html`**, con Resumen (por defecto, va
-  última), Mis torneos, Participantes, Resultados y Reportes. Ahí el conmutador es el menú propio del
+  última), Mis torneos, Participantes, Resultados, Reportes y
+  Configuración: las seis entradas del menú propio andan. Ahí el conmutador es el menú propio del
   panel, no una barra `.pestanas`. Mis torneos es la versión completa de la
   tabla del Resumen: los mismos cuatro torneos, más disciplina y fecha de
   inicio, sin ninguna acción conectada. Resultados es la versión completa de
@@ -243,6 +245,18 @@ dejaban ver interioridades del código.
   punteado lo que falta. Sus clases son `tramo`, `tramo-pendiente` y
   `tramo-vacio`, no `barra`, que ya es la barra de avance de 2px de las
   tarjetas. Sin botón de exportar.
+  Configuración es de solo lectura: el organizador (Club Sur,
+  torneos@clubsur.uy, tal como en `admin.html`, sin teléfono ni dirección
+  porque no existen) y los valores por defecto de cada torneo nuevo, que
+  son los del constructor de `ConfiguracionTorneo` y los DEFAULT de
+  `configuracion_torneo` (3/1/0 puntos, admite empate sí, clasifican a
+  playoffs 0, ida y vuelta no; rondas previstas y reglas no tienen, y
+  dicen "A definir en cada torneo"). Todo va dentro de un `fieldset`
+  con `disabled`, los booleanos con la `llave-visual` de Módulos del
+  sistema, y "Guardar" apagado como "Publicar ronda 3".
+  **Diferencia sin tocar**: `crear.html` trae "Clasifican a playoffs"
+  preseleccionado en 4, y el valor por defecto del código y del schema
+  es 0.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
