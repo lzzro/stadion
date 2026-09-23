@@ -97,8 +97,8 @@ Convenciones:
   igual que `llave.html`; con `#posiciones` marca Posiciones, que es a
   donde apunta ese enlace del menú. El gancho es la clase `ficha-torneo`.
   En `panel.html` el menú es el suyo propio y hace de barra de pestañas:
-  sin ancla marca Resumen, y con `#mis-torneos`, `#participantes` o
-  `#resultados` marca la entrada del mismo nombre. El gancho
+  sin ancla marca Resumen, y con `#mis-torneos`, `#participantes`,
+  `#resultados` o `#reportes` marca la entrada del mismo nombre. El gancho
   es la clase `panel-organizador`.
   **Pendiente de confirmación docente**: las dos reglas usan `:has()`, que
   no figura entre los temas de clase. El combinador `~` de las pestañas no
@@ -213,7 +213,7 @@ dejaban ver interioridades del código.
   curso que muestran Resumen y Calendario es la 8, que es la que se deduce
   de los `PJ = 7` de la tabla de posiciones y de `calendario.html`.
   **La misma mecánica está en `panel.html`**, con Resumen (por defecto, va
-  última), Mis torneos, Participantes y Resultados. Ahí el conmutador es el menú propio del
+  última), Mis torneos, Participantes, Resultados y Reportes. Ahí el conmutador es el menú propio del
   panel, no una barra `.pestanas`. Mis torneos es la versión completa de la
   tabla del Resumen: los mismos cuatro torneos, más disciplina y fecha de
   inicio, sin ninguna acción conectada. Resultados es la versión completa de
@@ -232,6 +232,17 @@ dejaban ver interioridades del código.
   2 programado); de los otros tres torneos va solo la cantidad de
   inscriptos, la misma de Mis torneos (16, 9 de 12, 32). La vista reusa
   el id `#participantes` de `torneo.html` y sus reglas de CSS.
+  Reportes tampoco suma ningún número: inscriptos por torneo en barras
+  horizontales (24, 16, 9 de 12 cupos, 32; total 81, el mismo del KPI
+  "Participantes totales"), la ronda 3 del Tenis de Mesa en una barra
+  apilada (7 cargadas, 4 pendientes de carga, 1 por jugar) y los cuatro
+  torneos agrupados con los chips de estado. Los dos gráficos son SVG sin
+  JavaScript, como el de `rendimiento.html`, con cada número escrito. Se
+  distinguen por forma y no por color, porque olivo y olivo claro se
+  confunden: lleno lo hecho, pálido con borde lo pendiente, contorno
+  punteado lo que falta. Sus clases son `tramo`, `tramo-pendiente` y
+  `tramo-vacio`, no `barra`, que ya es la barra de avance de 2px de las
+  tarjetas. Sin botón de exportar.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
