@@ -180,6 +180,19 @@ ya con sus filas.
 Si `rol` quedara vacío, el alta de cuentas falla al asignar el rol
 `jugador`. Comprobalo antes de seguir.
 
+**Si la base ya estaba importada de antes**, no hace falta reimportar el
+esquema entero: los cambios posteriores están en `sql/migraciones/`, un
+archivo por cambio y numerados en el orden en que se corren. Cada uno
+explica arriba qué hace y qué esperar. Se corren igual que el esquema:
+con `lucasmar_sgdm` elegida, pestaña **SQL** o **Import**.
+
+| Migración | Qué agrega |
+|---|---|
+| `001_check_puntos_victoria.sql` | `ck_config_victoria`: los puntos por victoria van de 1 a 10 |
+
+Una base importada con el `schema.sql` actual ya las trae y no necesita
+ninguna.
+
 ---
 
 ## Paso 3 — Subir los archivos

@@ -46,6 +46,9 @@ stadion/
 │   ├── panel.html  admin.html       ← paneles de organizador y de sistema
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
 ├── .gitignore              ← excluye credenciales, respaldos y métricas
+├── sql/
+│   ├── schema.sql          ← DDL + DCL; crea una base nueva desde cero
+│   └── migraciones/        ← cambios para bases ya creadas, a mano y en orden
 ├── docs/
 │   ├── configuracion-apache.md  ← despliegue: virtual host y puesta en marcha
 │   ├── respaldos-cron.md   ← cron, respaldos y la decisión sobre Grafana
@@ -298,10 +301,19 @@ dejaban ver interioridades del código.
       solo con estado `'inscripcion'`, y las transiciones `publicar()`,
       `comenzar()` y `finalizar()` en `Torneo`, que se suman a
       `cancelar()`. `ConfiguracionTorneo::validar()` exige de 1 a 10
-      puntos por victoria (antes de 0 a 10), igual que `crear.html`.
-      `sql/schema.sql` no tiene CHECK de rango para ese campo (solo
-      `ck_config_pts`, el orden victoria ≥ empate ≥ derrota), así que la
-      base acepta 0 y también más de 10: el rango lo controla el modelo.
+      puntos por victoria (antes de 0 a 10), igual que `crear.html`, y
+      la base también: `ck_config_victoria CHECK (puntos_victoria
+      BETWEEN 1 AND 10)` en `configuracion_torneo`.
+      **Migraciones**: las bases ya creadas no se actualizan solas. Cada
+      cambio de estructura posterior al esquema va en
+      `sql/migraciones/NNN_descripcion.sql`, para correr a mano en
+      phpMyAdmin (XAMPP y hosting), sin `USE` porque el nombre de la base
+      cambia entre los dos. `001_check_puntos_victoria.sql` es la
+      primera: probada en MariaDB 10.11 sobre una base creada con el
+      esquema anterior, con datos; frena sin cambiar nada si alguna fila
+      viola el rango, y al correrla dos veces el segundo `ALTER` avisa
+      que la restricción ya existe. `schema.sql` la trae incluida, así
+      que una base nueva no la necesita.
 - [x] Integración con PHP usando POO — gestión de usuarios funcionando de
       punta a punta: `apps/config/database.php` (mysqli con `sgdm_app`,
       nunca root), `apps/models/UsuarioRepositorio.php` (alta, búsqueda,
