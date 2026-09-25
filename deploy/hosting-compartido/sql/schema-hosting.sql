@@ -1,4 +1,21 @@
 -- =====================================================================
+-- ESQUEMA PARA HOSTING COMPARTIDO - GENERADO, NO EDITAR A MANO
+-- ---------------------------------------------------------------------
+-- Lo genera scripts/armar-deploy.sh a partir de sql/schema.sql. Es el
+-- mismo esquema sin los bloques "[solo servidor propio]": sin CREATE
+-- DATABASE, sin USE, sin el borrado de las tablas y sin el DCL (los
+-- usuarios de la base y sus permisos se dan en cPanel). Cada tabla
+-- lleva su codificacion escrita, asi que queda en utf8mb4 aunque la
+-- base del hosting venga en latin1.
+--
+-- Se importa en phpMyAdmin, con la base del hosting elegida a la
+-- izquierda, en una base VACIA. Si la base ya tiene tablas, frena en la
+-- primera ("already exists") sin tocar nada: para una base que ya
+-- existe van las migraciones de sql/migraciones/. El paso a paso esta
+-- en docs/deploy-hosting-compartido.md.
+-- =====================================================================
+
+-- =====================================================================
 -- SGDM - Sistema de Gestion Deportiva Modular
 -- Producto: Stadion (Agon) - Lucas Martiarena - 3.o MN - ITS Arias Balparda
 -- Archivo: sql/schema.sql
@@ -22,14 +39,6 @@
 -- occidental. La base que ya quedo en latin1 se convierte con
 -- sql/migraciones/004_utf8mb4.sql.
 --
--- [solo servidor propio] desde aca
--- HOSTING COMPARTIDO: este archivo no se importa tal cual en un hosting.
--- Ahi no se puede crear la base ni usuarios por SQL, y los bloques
--- marcados "[solo servidor propio]" (CREATE DATABASE, USE, el borrado
--- de las tablas y el DCL) darian error o harian dano. La version para
--- el hosting la genera scripts/armar-deploy.sh, sin esos bloques, en
--- deploy/hosting-compartido/sql/schema-hosting.sql. No se edita a mano.
--- [solo servidor propio] hasta aca
 -- =====================================================================
 --
 -- MODELO RELACIONAL (resumen textual)
@@ -120,39 +129,6 @@
 -- lo importe phpMyAdmin o la consola.
 SET NAMES utf8mb4;
 
--- [solo servidor propio] desde aca
--- Desde aca hasta "[solo servidor propio] hasta aca", solo para un
--- servidor propio (XAMPP, la VM). armar-deploy.sh lo saca de la version
--- del hosting: ahi la base ya la creo cPanel, y el borrado de tablas,
--- en una base con cuentas reales, se llevaria los datos por delante.
--- Sin el borrado, importar la version del hosting sobre una base que ya
--- tiene tablas frena en la primera ("already exists") sin tocar nada.
-CREATE DATABASE IF NOT EXISTS sgdm
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE sgdm;
-
--- Borrado en orden inverso al de creacion, para no violar las claves
--- foraneas al volver a ejecutar el script.
-DROP TABLE IF EXISTS auditoria;
-DROP TABLE IF EXISTS tabla_posiciones;
-DROP TABLE IF EXISTS resultado;
-DROP TABLE IF EXISTS enfrentamiento;
-DROP TABLE IF EXISTS ronda;
-DROP TABLE IF EXISTS participante;
-DROP TABLE IF EXISTS configuracion_torneo;
-DROP TABLE IF EXISTS torneo;
-DROP TABLE IF EXISTS modulo_competencia;
-DROP TABLE IF EXISTS tipo_torneo;
-DROP TABLE IF EXISTS disciplina;
-DROP TABLE IF EXISTS integrante_equipo;
-DROP TABLE IF EXISTS equipo;
-DROP TABLE IF EXISTS pedido_rol;
-DROP TABLE IF EXISTS usuario_rol;
-DROP TABLE IF EXISTS usuario;
-DROP TABLE IF EXISTS rol;
--- [solo servidor propio] hasta aca
 
 -- La codificacion por defecto de la base, tambien en utf8mb4. Sin
 -- nombre de base: vale para la que esta elegida (sgdm despues del USE,
@@ -622,79 +598,6 @@ INSERT INTO modulo_competencia (nombre, descripcion) VALUES
   ('Suizo',               'Emparejamiento por puntaje, sin repetir rivales');
 
 
--- [solo servidor propio] desde aca
--- =====================================================================
--- 12. DCL - USUARIOS DE BASE DE DATOS Y PERMISOS
--- =====================================================================
--- En un hosting compartido esta seccion no corre: los usuarios y sus
--- permisos se dan desde cPanel. La version del hosting no la trae.
--- PENDIENTE DE CONFIRMACION DOCENTE: el DCL (CREATE USER / GRANT) no se
--- dio en clase. Se incluye igual porque la consigna de la segunda
--- entrega lo exige, siguiendo el criterio de minimo privilegio visto en
--- Ciberseguridad. Antes de la entrega hay que confirmar con el docente
--- si esta es la forma esperada de resolverlo.
---
--- IMPORTANTE: las contrasenas de abajo son marcadores y tienen que
--- quedar asi en el repositorio. La real se le pone al usuario aparte,
--- a mano, despues de correr este script:
---
---   ALTER USER 'sgdm_app'@'localhost' IDENTIFIED BY 'la-que-elijas';
---
--- y esa misma clave va en apps/config/database.local.php, que el
--- .gitignore excluye. Asi la contrasena real no esta en ningun archivo
--- versionado.
---
--- Tres usuarios, por nivel de privilegio:
---   sgdm_app     -> el que usa la aplicacion PHP. Solo DML sobre sgdm:
---                   no puede crear ni borrar tablas, asi que un error o
---                   una inyeccion no pueden alterar la estructura.
---   sgdm_consulta-> solo lectura, para reportes y para la tabla de
---                   posiciones publica.
---   sgdm_admin   -> mantenimiento del esquema y respaldos.
-
-CREATE USER IF NOT EXISTS 'sgdm_app'@'localhost'      IDENTIFIED BY 'CAMBIAR_CLAVE_APP';
-CREATE USER IF NOT EXISTS 'sgdm_consulta'@'localhost' IDENTIFIED BY 'CAMBIAR_CLAVE_CONSULTA';
-CREATE USER IF NOT EXISTS 'sgdm_admin'@'localhost'    IDENTIFIED BY 'CAMBIAR_CLAVE_ADMIN';
-
--- Aplicacion: lectura en todo el esquema y escritura solo donde la
--- necesita. No tiene ningun permiso de DDL, asi que un error de la
--- aplicacion o una inyeccion no pueden alterar la estructura de la base.
-GRANT SELECT ON sgdm.* TO 'sgdm_app'@'localhost';
-
--- Tablas operativas. usuario y equipo van sin DELETE a proposito: la
--- baja es logica (activo = 0), de modo que la propia base impide que la
--- aplicacion borre una persona o un equipo con historial.
-GRANT INSERT, UPDATE         ON sgdm.usuario              TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.usuario_rol          TO 'sgdm_app'@'localhost';
--- Pedidos de rol: sin DELETE. Un pedido no se borra, se resuelve: el
--- historial de quien pidio que y quien lo aprobo queda entero.
-GRANT INSERT, UPDATE         ON sgdm.pedido_rol           TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE         ON sgdm.equipo               TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.integrante_equipo    TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.torneo               TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.configuracion_torneo TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.participante         TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.ronda                TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.enfrentamiento       TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.resultado            TO 'sgdm_app'@'localhost';
-GRANT INSERT, UPDATE, DELETE ON sgdm.tabla_posiciones     TO 'sgdm_app'@'localhost';
-
--- La auditoria solo admite altas: ni la aplicacion puede modificar o
--- borrar el historial.
-GRANT INSERT ON sgdm.auditoria TO 'sgdm_app'@'localhost';
-
--- Los catalogos (rol, disciplina, tipo_torneo, modulo_competencia)
--- quedan de solo lectura para la aplicacion: los mantiene sgdm_admin.
-
--- Consulta: solo lectura.
-GRANT SELECT ON sgdm.* TO 'sgdm_consulta'@'localhost';
-
--- Administrador del esquema: todo sobre esta base, y nada fuera de ella.
-GRANT ALL PRIVILEGES ON sgdm.* TO 'sgdm_admin'@'localhost';
-
--- GRANT y REVOKE toman efecto de inmediato. FLUSH PRIVILEGES solo hace
--- falta si se editan a mano las tablas de la base mysql.
--- [solo servidor propio] hasta aca
 
 
 -- =====================================================================

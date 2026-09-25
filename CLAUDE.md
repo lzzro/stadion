@@ -65,7 +65,8 @@ stadion/
 │   └── respaldo.local.cnf.ejemplo  ← plantilla; la copia real no se versiona
 ├── deploy/hosting-compartido/  ← GENERADO, no editar a mano (sin fotos en subidas/)
 │   ├── public_html/        ← lo único que el hosting publica
-│   └── stadion_app/        ← la aplicación, fuera del alcance web
+│   ├── stadion_app/        ← la aplicación, fuera del alcance web
+│   └── sql/schema-hosting.sql  ← el esquema para phpMyAdmin del hosting; no se sube
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
     ├── perfil.php          ← vista de perfil con pestañas: Datos, Mis torneos, Rendimiento
@@ -178,6 +179,20 @@ Convenciones:
   para `sgdm_admin`, cuya contraseña vive en `scripts/respaldo.local.cnf`
   (también excluido): el script de respaldo se niega a arrancar si ese
   archivo no está en modo 600.
+- **Codificación: todo en `utf8mb4` con `utf8mb4_unicode_ci`, escrita en
+  cada tabla.** Todo `CREATE TABLE`, en `schema.sql` y en cualquier
+  migración, termina en
+  `) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+  así el resultado no depende de la base donde se importe (cPanel crea las
+  bases en `latin1`). `armar-deploy.sh` corta con error si una tabla de
+  `schema.sql` no la declara.
+- **`schema.sql` nunca se recorta a mano para el hosting.** Lo que es solo
+  para un servidor propio (`CREATE DATABASE`, `USE`, el borrado de tablas,
+  el DCL) va entre dos renglones, `-- [solo servidor propio] desde aca` y
+  `-- [solo servidor propio] hasta aca`, y `armar-deploy.sh` genera sin eso
+  `deploy/hosting-compartido/sql/schema-hosting.sql`. Esa versión no borra
+  nada: sobre una base con tablas frena en la primera. Al agregar algo que
+  no corre en un hosting, marcarlo igual.
 - Lo que generan los scripts (`backups/`, `metricas/`) tampoco se versiona:
   un respaldo lleva adentro datos personales y la configuración con la
   contraseña de la base.
@@ -386,6 +401,9 @@ dejaban ver interioridades del código.
       viola el rango, y al correrla dos veces el segundo `ALTER` avisa
       que la restricción ya existe. `schema.sql` la trae incluida, así
       que una base nueva no la necesita.
+      Hoy van de la 001 a la 004. En una base que viene de antes, el
+      orden es: las que falten, la 003, la 004 y recién ahí
+      `primer_administrador.sql` (ver el ítem de la codificación, abajo).
 - [x] Integración con PHP usando POO — gestión de usuarios funcionando de
       punta a punta: `apps/config/database.php` (mysqli con `sgdm_app`,
       nunca root), `apps/models/UsuarioRepositorio.php` (alta, búsqueda,
@@ -585,6 +603,75 @@ dejaban ver interioridades del código.
       de la base); DELETE de `sgdm_app` sobre `pedido_rol` (1142); y cada
       formulario sin token, con uno inventado y con el de otra sesión (403,
       nada cambia).
+
+- [x] Codificación `utf8mb4` — **problema real del hosting**: la base del
+      hosting (MariaDB 11.4.13) tenía las 17 tablas en `latin1`
+      (`latin1_swedish_ci`). Para importar ahí se había borrado a mano el
+      `CREATE DATABASE` de `schema.sql` (el hosting no deja crear bases por
+      SQL), y como las tablas no declaraban su codificación, tomaron la de
+      la base, que cPanel crea con la del servidor. En `latin1` las tildes
+      y la eñe entran, pero un emoji o una letra como la Ł no: el perfil
+      dice "El perfil no se guarda.".
+      **Esquema**: cada `CREATE TABLE` declara su codificación (ver
+      Convenciones), la 003 también, y `schema.sql` suma `SET NAMES utf8mb4`
+      y un `ALTER DATABASE` sin nombre que deja la base en `utf8mb4`. La
+      versión para el hosting la genera `armar-deploy.sh`
+      (`deploy/hosting-compartido/sql/schema-hosting.sql`), sin `CREATE
+      DATABASE`, `USE`, borrado de tablas ni DCL; además de lo pedido, sin
+      el borrado de tablas, porque en el hosting hay cuentas reales y una
+      reimportación por error se las llevaba.
+      **Migración 004** (`sql/migraciones/004_utf8mb4.sql`): la base y las
+      17 tablas a `utf8mb4_unicode_ci` con `CONVERT TO CHARACTER SET`, que
+      traduce cada carácter (no copia bytes). Antes de cambiar nada
+      comprueba que esté la 003 y busca valores que chocarían en un índice
+      único (`latin1_swedish_ci` distingue ü de u, ä de a y ß de ss, y
+      `utf8mb4_unicode_ci` no): si hay, frena antes de cambiar nada, con
+      una tabla temporal con un CHECK (la consulta que los lista va antes,
+      y en phpMyAdmin se corre sola, porque ahí un error esconde los
+      resultados anteriores). Las 25 claves foráneas son numéricas, así que
+      el orden no importa y no se apagan; el índice de texto más largo
+      (correo, 120 caracteres) ocupa 480 bytes, debajo de los 767 del
+      formato de fila más viejo; `reglas` se deja en `TEXT` (`CONVERT TO`
+      la subía sola a `MEDIUMTEXT`). Termina mostrando la base, las
+      tablas, las columnas, las CHECK (28), las claves foráneas (25) y los
+      índices únicos (14), que tienen que dar lo mismo que una base nueva.
+      **Pendiente de confirmación docente**: la tabla temporal que frena,
+      las consultas a `information_schema` que verifican, y la transacción
+      de `primer_administrador.sql`.
+      **`primer_administrador.sql`**: contra `latin1` ya andaba (en una
+      comparación de igual peso gana la codificación Unicode), pero con
+      cualquier otro cotejo `utf8mb4` daba "Illegal mix of collations".
+      Ahora compara la columna convertida al mismo cotejo que la variable,
+      y anda con cualquier codificación. Además va en una transacción: sin
+      la 003 la fila de auditoría fallaba y el rol quedaba dado igual, sin
+      registro, y al repetirlo ya no se registraba nunca. Y ya no usa
+      `ROW_COUNT()`: phpMyAdmin corre consultas propias entre las del
+      archivo (`SHOW WARNINGS`, `SELECT LAST_INSERT_ID()`), así que desde
+      phpMyAdmin el rol se daba pero la fila de auditoría no se escribía
+      nunca (por consola andaba). Ahora la auditoría y el rol salen de la
+      misma condición, la auditoría primero. **Regla para los `.sql` que
+      se corren en phpMyAdmin: nada que dependa de "la consulta
+      anterior"** (`ROW_COUNT()`, `LAST_INSERT_ID()`, `FOUND_ROWS()`).
+      **Probado** en MariaDB 10.11 y **11.4.7** (arrancada con los valores
+      de fábrica, `latin1` como el hosting), con una cuenta con los
+      permisos de cPanel: la historia del hosting reproducida, datos en
+      todas las columnas de texto de las 17 tablas idénticos antes y
+      después, emoji, CHECK (la de las fotos sigue distinguiendo
+      mayúsculas) y claves foráneas, la base migrada idéntica a una nueva
+      en `SHOW CREATE TABLE`, los choques, sin la 003, dos veces seguidas,
+      y de punta a punta con PHP-FPM contra la 11.4: el emoji falla, se
+      corre la 004, y el mismo formulario lo guarda. **También a través
+      de phpMyAdmin 5.2.1** (instalado para probar, contra la 11.4): el
+      esquema del hosting por Import, la 004 por SQL y por Import, y el
+      primer administrador. phpMyAdmin muestra los resultados uno debajo
+      del otro, pero cuando algo da error muestra solo el error (la lista
+      de choques de la 004 se corre aparte, y así lo dice la guía), y al
+      frenar deshace lo que estaba a medio hacer. La batería de siempre
+      corrió con la disposición local contra la 10.11 y con la del
+      hosting (PHP-FPM) contra la 11.4 con la base migrada desde `latin1`:
+      igual en las dos. La única diferencia esperada: con los permisos de
+      cPanel, `sgdm_app` puede borrar en `pedido_rol` (cPanel no da
+      permisos por tabla); la prueba lo mira sin borrar nada.
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.

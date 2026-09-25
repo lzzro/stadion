@@ -116,7 +116,9 @@ En el repositorio:
 ```
 deploy/hosting-compartido/
 ├── public_html/     → sube a public_html/ del hosting
-└── stadion_app/     → sube AL LADO de public_html/, NO adentro
+├── stadion_app/     → sube AL LADO de public_html/, NO adentro
+└── sql/
+    └── schema-hosting.sql   → NO se sube: se importa en phpMyAdmin (paso 2)
 ```
 
 Esa carpeta **se genera, no se edita a mano**. Si tocás algo en `public/` o
@@ -127,7 +129,8 @@ en `apps/`, se rehace con:
 ```
 
 El script copia todo, ajusta las rutas de los formularios, escribe los cinco
-puentes, y **comprueba que la configuración local con tu contraseña de XAMPP
+puentes, arma el esquema para el hosting (`sql/schema-hosting.sql`, ver el
+paso 2) y **comprueba que la configuración local con tu contraseña de XAMPP
 no se haya colado en la copia**. Si aparece, corta con error.
 
 Editar `deploy/` a mano es el camino seguro a que la copia y el original
@@ -142,6 +145,11 @@ En cPanel, **MySQL® Databases**.
 1. **Create New Database**: escribí `sgdm`. cPanel le pone adelante el nombre
    de la cuenta y queda, por ejemplo, `lucasmar_sgdm`. **Anotá el nombre
    completo**, con el prefijo.
+
+   cPanel crea la base con la codificación por defecto del servidor, que
+   suele ser `latin1`, y no deja elegir otra. No hace falta cambiarla a
+   mano: el esquema del paso 2 la pasa a `utf8mb4`, y además cada tabla
+   declara la suya.
 
 2. **Add New User**: usuario `sgdm_app`, que queda `lucasmar_sgdm_app`.
    Usá el generador de contraseñas y **guardala antes de cerrar la ventana**:
@@ -178,38 +186,55 @@ Anotá los tres datos, que son los que van en el paso 4:
 En cPanel, **phpMyAdmin**. Elegí la base `lucasmar_sgdm` en la lista de la
 izquierda y andá a la pestaña **Import**.
 
-Subí `sql/schema.sql` del repositorio y dale a **Go**.
+Subí **`deploy/hosting-compartido/sql/schema-hosting.sql`** y dale a **Go**.
+No `sql/schema.sql`: ese es para un servidor propio (XAMPP, la VM).
 
-Dos cosas para mirar antes:
+`schema-hosting.sql` lo genera `armar-deploy.sh` a partir de `schema.sql`,
+sin lo que en un hosting da error o hace daño: el `CREATE DATABASE` y el
+`USE` (la base ya la creó cPanel), el borrado de tablas y la sección del
+DCL (los usuarios y sus permisos los diste en el paso 1). **No hay que
+recortar nada a mano.** La vez que se recortó a mano, con el `CREATE
+DATABASE` se fue también la codificación y las tablas quedaron en `latin1`.
+Ahora cada tabla la trae escrita (`utf8mb4`), así que quedan bien aunque la
+base venga en `latin1`.
 
-- **La sección 12 del archivo (el DCL) no corre en el hosting.** Los
-  `CREATE USER` y `GRANT` necesitan permisos de administrador que una cuenta
-  compartida no tiene. Los usuarios ya los creaste vos por la interfaz de
-  cPanel en el paso 1, que es el equivalente. Si la importación se queja al
-  llegar ahí, **es esperable y el resto ya se creó**: comprobá que estén las
-  17 tablas y seguí.
-- Si preferís evitar el error, borrá esa sección del archivo antes de
-  subirlo. No hace falta tocar el `schema.sql` del repositorio: copialo,
-  recortá la copia y subí esa.
+Es para una base **vacía**. Si la base ya tiene tablas, la importación
+frena en la primera ("Table 'rol' already exists") sin borrar ni cambiar
+nada: para una base que ya existe van las migraciones, más abajo.
 
 Cuando termina, en la lista de la izquierda tienen que aparecer **17 tablas**
 y los catálogos (`rol`, `disciplina`, `tipo_torneo`, `modulo_competencia`)
-ya con sus filas.
+ya con sus filas, y todas en `utf8mb4` (ver **Comprobar la codificación**).
 
 Si `rol` quedara vacío, el alta de cuentas falla al asignar el rol
 `jugador`. Comprobalo antes de seguir.
 
-**Si la base ya estaba importada de antes**, no hace falta reimportar el
-esquema entero: los cambios posteriores están en `sql/migraciones/`, un
-archivo por cambio y numerados en el orden en que se corren. Cada uno
-explica arriba qué hace y qué esperar. Se corren igual que el esquema:
-con `lucasmar_sgdm` elegida, pestaña **SQL** o **Import**.
+### Si la base ya estaba importada de antes
+
+No hace falta reimportar el esquema entero: los cambios posteriores están
+en `sql/migraciones/`, un archivo por cambio y numerados en el orden en que
+se corren. Cada uno explica arriba qué hace y qué esperar. Se corren igual
+que el esquema: con `lucasmar_sgdm` elegida, pestaña **SQL** o **Import**.
 
 | Migración | Qué agrega |
 |---|---|
 | `001_check_puntos_victoria.sql` | `ck_config_victoria`: los puntos por victoria van de 1 a 10 |
 | `002_imagenes_usuario.sql` | `foto_perfil` y `foto_portada` en `usuario`, con sus dos CHECK. **Sin esta, el perfil no abre** |
 | `003_pedidos_de_rol.sql` | La tabla `pedido_rol` y las tres acciones nuevas de `auditoria` (`pedido_rol`, `aprobacion`, `rechazo`). **Sin esta, pedir el rol de organizador no anda** |
+| `004_utf8mb4.sql` | La base y las 17 tablas de `latin1` a `utf8mb4`, sin perder datos. **Sin esta, un emoji o una letra fuera del alfabeto de Europa occidental hacen fallar el perfil** |
+
+**El orden importa.** En una base que viene de antes, sin administrador y
+con las tablas en `latin1` (el caso del hosting):
+
+1. las que falten de la 001 y la 002,
+2. la **003**,
+3. la **004**,
+4. el **primer administrador** (paso 7).
+
+La 004 necesita la tabla de la 003: si la 003 no corrió, la 004 frena en su
+primera consulta sin cambiar nada. El primer administrador necesita la 003
+(registra la asignación con una acción que agrega esa migración) y anda
+igual antes o después de la 004.
 
 La 003 termina con un `GRANT` para `sgdm_app`. **En el hosting ese último
 bloque da error, y es esperable**: el permiso ya lo diste en cPanel en el
@@ -222,8 +247,83 @@ XAMPP; en el hosting, si marcaste `DELETE` en el paso 1, alcanza a todas
 las tablas. Los pedidos igual no se borran: ningún código del sitio lo
 intenta.
 
-Una base importada con el `schema.sql` actual ya las trae y no necesita
+Una base importada con el esquema actual ya trae todo y no necesita
 ninguna.
+
+### La 004, paso a paso
+
+1. **Antes, un respaldo.** Con la base elegida: **Export** → **Quick** →
+   formato **SQL** → **Go**. Guardá el archivo: hay cuentas reales adentro.
+2. Pestaña **SQL**, pegá `sql/migraciones/004_utf8mb4.sql` entero (o
+   **Import** y subilo) y **Go**. Las opciones de abajo, como vienen:
+   **Enable foreign key checks** tildado y **Rollback when finished** sin
+   tildar.
+3. Mirá los resultados (phpMyAdmin los muestra uno debajo del otro; el
+   que importa es el último):
+   - El primero cuenta los pedidos de rol: cualquier número está bien.
+   - El segundo lista los valores que **chocarían** en un índice único al
+     convertir (dos nombres que en `latin1` son distintos y en `utf8mb4`
+     serían el mismo, como "Muller" y "Müller"). Lo normal es que no
+     muestre ninguna fila.
+   - El último tiene que mostrar exactamente:
+
+     | base | tablas_utf8mb4 | tablas_en_otra | columnas_en_otra | restricciones_check | claves_foraneas | indices_unicos |
+     |---|---|---|---|---|---|---|
+     | `utf8mb4_unicode_ci` | 17 | 0 | 0 | 28 | 25 | 14 |
+
+     Son los números de una base nueva hecha con el esquema actual: si
+     coinciden, la base convertida tiene todas sus restricciones. Si alguno
+     no coincide, no sigas y avisá.
+4. Entrá al sitio y guardá en tu perfil una presentación con un emoji: si
+   dice "El perfil queda guardado." y el emoji se ve, quedó.
+
+Si frena:
+
+- **"Table '...pedido_rol' doesn't exist"**: falta la 003. Corré la 003 y
+  después la 004 de nuevo. No se cambió nada.
+- **"CONSTRAINT `ck_004_sin_choques` failed"**: hay valores que chocarían.
+  Cuando algo da error, phpMyAdmin muestra **solo el error**, no los
+  resultados de antes, así que la lista no la vas a ver ahí: copiá del
+  archivo la consulta del paso **2a** (la que empieza con
+  `SELECT 'rol.nombre' AS indice`, hasta el primer `;`) y correla sola;
+  solo mira, no cambia nada. Cambiá uno de cada par (por ejemplo con
+  **Edit** en la tabla que dice) y corré la 004 entera de nuevo. No se
+  cambió nada.
+
+Correrla dos veces no hace daño: la segunda vez da el mismo resultado.
+
+### Comprobar la codificación
+
+Tres formas, de la más rápida a la más detallada:
+
+- **Pestaña Structure** de la base: en la columna **Collation** de cada
+  tabla tiene que decir `utf8mb4_unicode_ci` en las 17. Si dice
+  `latin1_swedish_ci`, falta la 004.
+- **Todas de una vez**, en la pestaña **SQL**:
+
+  ```sql
+  SELECT TABLE_NAME, TABLE_COLLATION
+    FROM information_schema.TABLES
+   WHERE TABLE_SCHEMA = DATABASE();
+
+  SELECT @@character_set_database, @@collation_database;
+  ```
+
+  La primera, 17 filas con `utf8mb4_unicode_ci`; la segunda, `utf8mb4` y
+  `utf8mb4_unicode_ci` (la de la base).
+- **Una tabla por dentro**, con `SHOW CREATE TABLE usuario;`. phpMyAdmin
+  corta los textos largos: para ver el resultado entero, **Extra options**
+  arriba del resultado (en versiones viejas, **+ Options**) → **Full
+  texts** → **Go**. La última línea tiene que terminar en
+  `DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`. En una tabla con
+  filas, entre `ENGINE=InnoDB` y eso aparece el contador, que no importa:
+
+  ```
+  ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ```
+
+  Si termina en `DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci`, falta
+  la 004.
 
 ---
 
@@ -414,6 +514,10 @@ Los pedidos de rol los aprueba una cuenta con el rol **administrador**, y
 ese rol no se pide desde el sitio: la primera cuenta de la administración
 se nombra a mano, una sola vez por base.
 
+Va **después de la 003** (paso 2). Anda igual con las tablas todavía en
+`latin1` o ya convertidas por la 004; en una base que viene de antes, el
+orden es 003, 004 y este.
+
 1. Crear **tu** cuenta desde `registro.php`, como cualquier otra. Conviene
    que no sea la de prueba del paso 6.
 2. En phpMyAdmin, con `lucasmar_sgdm` elegida → pestaña **SQL**.
@@ -422,11 +526,22 @@ se nombra a mano, una sola vez por base.
 4. Reemplazar `CORREO_DE_LA_CUENTA` por el correo de tu cuenta, entre las
    comillas. **En el pegado, no en el archivo del repositorio**: ahí no va
    ningún correo real.
-5. **Go**. La última consulta muestra tu cuenta con `administrador,jugador`.
-   Si no muestra ninguna fila, el correo no coincide: revisá cómo lo
-   escribiste.
+5. **Go**, con **Rollback when finished** sin tildar (si no, phpMyAdmin
+   deshace todo al terminar). La última consulta muestra tu cuenta con
+   `administrador,jugador`. Si no muestra ninguna fila, el correo no
+   coincide: revisá cómo lo escribiste.
 
 Correrlo dos veces no hace daño. La asignación queda en `auditoria`.
+
+Si da **"CONSTRAINT `ck_audit_accion` failed"**, falta la 003: corré la 003 y
+repetí este. No queda nada a medias: el rol y su fila en `auditoria` van
+juntos, y si una falla no queda ninguna de las dos.
+
+**Si ya lo habías corrido con la versión anterior del archivo**: desde
+phpMyAdmin, aquella daba el rol pero no escribía la fila en `auditoria`
+(phpMyAdmin corre consultas propias entre las del archivo, y la versión
+vieja contaba mal por eso). El rol está bien dado y no hay que hacer nada;
+solo falta esa fila en el registro.
 
 Después, para probar la administración:
 
@@ -455,14 +570,19 @@ lo tiene que aprobar **otra** cuenta con el rol administrador.
 | La portada muestra una lista de archivos, o la vieja `index.html` | Falta `public_html/.htaccess` | Paso 3: mostrá los archivos ocultos y comprobá que esté |
 | El perfil no abre y el `error_log` dice `Unknown column 'foto_perfil'` | Falta la migración 002 | Paso 2, **Si la base ya estaba importada de antes** |
 | "El pedido no se puede registrar por ahora." al pedir el rol | Falta la migración 003 | Paso 2, **Si la base ya estaba importada de antes** |
+| "El perfil no se guarda." al guardar un texto con un emoji o una letra poco común (ł, ő, ğ…); con tildes y eñe sí guarda | Las tablas están en `latin1` | Paso 2: **La 004, paso a paso** |
+| La 004 frena con "Table '...pedido_rol' doesn't exist" | Falta la 003 | Correr la 003 y repetir la 004. No se cambió nada |
+| La 004 frena con "CONSTRAINT `ck_004_sin_choques` failed" | Dos valores de un índice único que en `utf8mb4` serían el mismo | Paso 2: **La 004, paso a paso**. No se cambió nada |
+| El primer administrador frena con "CONSTRAINT `ck_audit_accion` failed" | Falta la 003 | Correr la 003 y repetir. El rol no quedó dado |
+| "Table 'rol' already exists" al importar el esquema | La base ya tiene tablas | Es el freno buscado: no se tocó nada. Para una base que ya existe van las migraciones (paso 2) |
 | "El formulario no corresponde a esta sesion." | La página quedó abierta más de media hora (la sesión venció), o el navegador no guarda cookies para el sitio | Volver a abrir la página y repetir. Si pasa siempre, revisar que el navegador acepte cookies |
 | La administración dice "Esta pagina es solo para la administracion." con tu cuenta | Falta el paso 7, o se corrió con otro correo | Paso 7 |
 | "La imagen no se puede guardar por ahora." | La carpeta `public_html/subidas/` no existe o no tiene `755` | Paso 3 y paso 5. **Nunca `777`** |
 | "La imagen supera los 2 MB." con una imagen más chica | El límite de subida del hosting es menor que 2 MB | **MultiPHP INI Editor** en cPanel: `upload_max_filesize` en `2M` o más |
 | Error 500 en cualquier foto de `subidas/` | El hosting no admite alguna línea del `.htaccess` de `subidas/` | Mirá el `error_log`: dice cuál. Si es `Options -Indexes`, borrá solo esa línea; las otras capas siguen protegiendo |
 | La prueba de la carpeta de subidas muestra `CORRE` | El `.htaccess` de `subidas/` no está, o el hosting ignora los `.htaccess` | Mostrá los archivos ocultos y comprobá que esté. Si está, consultá al soporte del hosting si admite `.htaccess` (`AllowOverride`) |
-| El alta falla al asignar el rol | La tabla `rol` quedó vacía | Reimportá `schema.sql`, paso 2 |
-| Error al importar, en los `CREATE USER` | Es la sección 12 del DCL | Esperable: los usuarios ya los creaste en cPanel. Comprobá que estén las 17 tablas |
+| El alta falla al asignar el rol | La tabla `rol` quedó vacía | Paso 2, en una base vacía |
+| Error al importar, en `CREATE DATABASE`, `USE` o `CREATE USER` | Se importó `sql/schema.sql` en vez de `schema-hosting.sql` | Paso 2: importar `deploy/hosting-compartido/sql/schema-hosting.sql`. No recortar `schema.sql` a mano |
 | Entra pero el perfil manda al acceso | Pasaron 30 minutos sin actividad y la sesión se cerró sola | Volvé a entrar. Es el comportamiento buscado |
 | Página en blanco, sin ningún mensaje | Un error de PHP que el hosting no muestra | **Errors** en cPanel, o el `error_log` de la carpeta |
 | `https://TU-DOMINIO/stadion_app/...` muestra algo | `stadion_app` quedó dentro de `public_html` | Paso 3. **Urgente**: cambiá la contraseña de la base después de moverla |
@@ -539,13 +659,88 @@ mismo `DirectoryIndex` pobre de un hosting (`index.html` primero), que el
   anterior y con cuentas: las conserva sin imagen, y la base rechaza en esas
   columnas una ruta, un `../`, un `.php`, una doble extensión y mayúsculas.
 
+### La codificación y la migración 004
+
+Probado en **dos versiones de MariaDB**: la 10.11 (la de la VM) y la
+**11.4.7**, de la misma serie que la del hosting, arrancada con los valores
+de fábrica, que son los que dieron `latin1_swedish_ci` en el hosting. Todo
+lo del hosting corrió con una cuenta con los permisos de cPanel (todo sobre
+sus bases, nada global), no con root.
+
+- **La historia del hosting, reproducida**: base creada en `latin1`, el
+  esquema viejo recortado a mano como se hizo (sin `CREATE DATABASE`, `USE`
+  ni DCL), la 003 vieja, y datos en todas las columnas de texto de las 17
+  tablas: tildes, eñe, diéresis, ß, «», €, rayas, comillas tipográficas y
+  el resto de lo que entra en `latin1`. También con el esquema viejo de 17
+  tablas importado de una vez.
+- **Antes de la 004**, guardar un emoji da error en la base (1366), y en el
+  sitio el perfil dice "El perfil no se guarda.". Lo mismo con una letra
+  que no es de Europa occidental (Ł). Con tildes y eñe guarda bien.
+- **La 004**: corre sin error y da los números de la cabecera. Los datos,
+  comparados fila por fila antes y después, **idénticos** (y en bytes
+  UTF-8 de verdad: la ñ queda como `C3B1`). Las reglas de un torneo, un
+  texto largo, enteras. Las 28 CHECK, las 25 claves foráneas y todos los
+  índices, iguales que antes. La columna calculada de `pedido_rol`, igual.
+- **La base migrada es idéntica a una nueva**: el `SHOW CREATE TABLE` de
+  las 17 tablas y la codificación de la base, comparados con una base
+  hecha con `schema-hosting.sql`: iguales, incluido `reglas` en `TEXT`.
+- **Después de la 004**: un emoji se guarda y vuelve igual (4 bytes), en el
+  perfil, en la auditoría y en un nombre con índice único. Las CHECK siguen
+  frenando (las dos de las fotos distinguen mayúsculas, como antes), las
+  claves foráneas también, y los índices únicos comparan con el cotejo
+  nuevo.
+- **Casos que frenan sin cambiar nada**: sin la 003; con dos equipos
+  "Muller FC" y "Müller FC" (distintos en `latin1`, el mismo en `utf8mb4`):
+  la 004 los lista y frena, y renombrado uno, corre entera.
+- **Correrla dos veces**, o en una base que ya está en `utf8mb4` (como la
+  del XAMPP): no cambia ningún dato.
+- **`schema-hosting.sql`** importa sin error en una base `latin1` y deja
+  todo en `utf8mb4`; sobre una base con tablas frena en la primera sin
+  tocar nada. `armar-deploy.sh` corta con error si una tabla de
+  `schema.sql` no declara su codificación, si las marcas `[solo servidor
+  propio]` no cierran, o si en la versión del hosting queda un `CREATE
+  DATABASE`, un `USE`, un `DROP` o un permiso. Probado también con el
+  archivo con fines de renglón de Windows.
+- **El primer administrador**, con las tablas en `latin1`, en
+  `utf8mb4_unicode_ci` y en otro cotejo (`utf8mb4_general_ci`), con dos
+  cotejos de conexión y un correo con tilde: anda en todos los casos, y
+  dos veces deja una sola fila de auditoría. Sin la 003 frena y no deja el
+  rol dado.
+- **De punta a punta**, con PHP-FPM contra la 11.4 y la base en `latin1`
+  con los datos de prueba: el emoji falla en el perfil, se corre la 004
+  con la sesión abierta, y el mismo formulario lo guarda y lo muestra; los
+  nombres con tildes se siguen viendo bien, una cuenta dada de alta antes
+  entra con su clave, y la administración las lista.
+
+- **A través de phpMyAdmin 5.2.1**, no solo con la consola: el esquema
+  del hosting por **Import**, la 004 por **SQL** y por **Import**, y el
+  primer administrador por **SQL**, con la misma cuenta con permisos de
+  cPanel y contra la 11.4. phpMyAdmin muestra los resultados uno debajo
+  del otro; cuando algo da error muestra **solo el error** (por eso la
+  lista de choques hay que correrla aparte); y al frenar deshace lo que
+  estaba a medio hacer (sin la 003, el primer administrador no deja el
+  rol dado). La pestaña Structure y **Extra options → Full texts**
+  muestran la codificación como dice **Comprobar la codificación**.
+  Probar con phpMyAdmin encontró un error que la consola no mostraba: el
+  primer administrador, desde phpMyAdmin, no escribía su fila de
+  auditoría. Ya está corregido.
+- **La batería de siempre**, con la disposición del hosting (PHP-FPM)
+  contra la 11.4 con la base migrada desde `latin1`: todo igual que con la
+  base de siempre. La única diferencia es la esperada: con los permisos de
+  cPanel, `sgdm_app` tiene `DELETE` sobre `pedido_rol` (ver el paso 2).
+
 **Lo que no se pudo probar acá**, y hay que comprobar en el hosting:
 
 - cPanel en sí: crear la base, los permisos del usuario, el File Manager.
 - Que tu hosting en particular respete el `.htaccess` de `subidas/`: es la
   prueba de la carpeta de subidas del paso 6, y no se saltea.
-- El comportamiento exacto de la importación de `schema.sql` al llegar al
-  DCL, que depende de los permisos que dé el hosting.
+- El phpMyAdmin de tu cPanel puede ser de otra versión que la 5.2.1: los
+  nombres de los botones pueden cambiar un poco (en versiones viejas,
+  **+ Options** en vez de **Extra options**).
+- La versión exacta del hosting (11.4.13): se probó con la 11.4.7, de la
+  misma serie.
+- Tus datos reales. La 004 se probó con datos de prueba con todo lo que
+  entra en `latin1`; por eso el respaldo antes de correrla.
 - El certificado y el `https`.
 - La versión de PHP del hosting. El proyecto anda con PHP 8; si la cuenta
   viniera con PHP 7, conviene subirla desde **MultiPHP Manager**.

@@ -32,7 +32,13 @@ las credenciales de la base**. El virtual host lo corta.
 - XAMPP instalado, con Apache y MySQL funcionando desde el panel.
 - El proyecto clonado en una carpeta conocida. En la máquina de desarrollo
   actual es `D:\xampp\htdocs\stadion`.
-- La base `sgdm` creada con `sql/schema.sql` (ver ese archivo).
+- La base `sgdm` creada con `sql/schema.sql` (ver ese archivo), y al día
+  con las migraciones de `sql/migraciones/`, en orden. Si la base se creó
+  con `schema.sql`, ya está en `utf8mb4`: la 004 no le cambia nada, pero
+  correrla no hace daño. Para comprobarlo, en la pestaña **Structure** de
+  `sgdm` la columna **Collation** tiene que decir `utf8mb4_unicode_ci` en
+  las 17 tablas (el detalle, en `docs/deploy-hosting-compartido.md`,
+  **Comprobar la codificación**).
 - La contraseña de `sgdm_app` puesta y la configuración local creada
   (ver la sección 2.1).
 - Permisos de administrador en Windows, **solo** para el paso 4.
@@ -304,6 +310,7 @@ Si el paso 2 da 404, falta el `Alias /apps/controllers`.
 | `subidas/prueba.php` muestra `CORRE` | Apache no lee `public/subidas/.htaccess` | Lo mismo: `AllowOverride All`, paso 3 |
 | El perfil no abre: `Unknown column 'foto_perfil'` | Falta la migración 002 | `sql/migraciones/002_imagenes_usuario.sql` en phpMyAdmin, con `sgdm` elegida |
 | "El pedido no se puede registrar por ahora." al pedir el rol de organizador | Falta la migración 003 | `sql/migraciones/003_pedidos_de_rol.sql` en phpMyAdmin, con `sgdm` elegida (en XAMPP el `GRANT` del final sí corre) |
+| "El perfil no se guarda." con un emoji en el texto; con tildes y eñe sí guarda | Las tablas quedaron en `latin1` | `sql/migraciones/004_utf8mb4.sql` en phpMyAdmin, con `sgdm` elegida (después de la 003) |
 | "El formulario no corresponde a esta sesion." | La página quedó abierta más de media hora, o el navegador no guarda cookies de `stadion.local` | Volver a abrir la página y repetir |
 
 ---
