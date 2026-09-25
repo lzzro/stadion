@@ -328,16 +328,16 @@ de arriba.
 | 3 | Crear una cuenta de prueba | "La cuenta queda abierta a nombre de…" |
 | 4 | En phpMyAdmin, mirar la tabla `usuario` | La fila está, y `hash_password` empieza con `$2y$` — **nunca la contraseña tal cual** |
 | 5 | Crear otra cuenta con el mismo correo | "Ya hay una cuenta con ese correo" |
-| 6 | Entrar desde `login.php` con la clave correcta | "La sesión queda abierta a nombre de…", y arriba tu nombre y **Cerrar sesión** |
+| 6 | Entrar desde `login.php` con la clave correcta | "La sesión queda abierta a nombre de…", y arriba un círculo con tus iniciales |
 | 7 | Con la clave incorrecta | "El correo o la contraseña no coinciden" |
 | 8 | Después de entrar, **Ver el perfil** | Tu nombre, tu correo, la fecha de alta y el rol `jugador`, todo de la base |
 | 9 | Cambiar el alias y guardar | "El perfil queda guardado", y el cambio se ve en `usuario` en phpMyAdmin |
-| 10 | Con la sesión abierta, abrir `torneos.php` y `login.php` | En `torneos.php`, tu nombre arriba; `login.php` manda directo al perfil |
+| 10 | Con la sesión abierta, abrir `torneos.php` y `login.php` | En `torneos.php`, el círculo arriba (lleva al perfil); `login.php` manda directo al perfil |
 | 11 | En el perfil, pestañas **Mis torneos** y **Rendimiento** | Mis torneos dice que no hay ninguno (todavía no hay torneos en la base); Rendimiento muestra los valores con la marca "De muestra" |
 | 12 | En **Datos → Imágenes**, subir una foto JPG o PNG | "La foto de perfil queda cargada.", la foto en el círculo, y un archivo nuevo en `subidas/` con un nombre de 32 letras y números |
 | 13 | Subir otra foto | La anterior desaparece de `subidas/`: queda una sola |
 | 14 | Intentar subir un `.txt` o un `.pdf` renombrado a `.jpg` | "Solo se aceptan imagenes JPG, PNG o WEBP." |
-| 15 | **Cerrar sesión** | Vuelve a la portada, con "Iniciar sesión" arriba |
+| 15 | En el perfil, **Cerrar sesión** (debajo del nombre) | Vuelve a la portada, con "Iniciar sesión" arriba |
 | 16 | Abrir `/controllers/perfil.php` en una ventana privada | Manda a `login.php`: sin sesión no hay perfil |
 
 ### La prueba de la carpeta de subidas
@@ -459,11 +459,13 @@ mismo `DirectoryIndex` pobre de un hosting (`index.html` primero), que el
 - **Cabecera sin sesión**: comparada píxel a píxel con la de antes en 6
   páginas, 3 anchos y los dos modos: idéntica en los 36 casos. Un visitante
   sin sesión no recibe cookie.
-- **Con sesión**: el nombre y Cerrar sesión en todas las páginas;
-  `login.php` y `registro.php` mandan al perfil. A los 30 minutos y 1
-  segundo sin uso, la cabecera vuelve a "Iniciar sesión" y la cookie se
-  borra. Cerrar sesión borra la sesión del servidor y la cookie, y queda en
-  `auditoria` como `logout`; un GET a `salir.php` no cierra nada.
+- **Con sesión**: en todas las páginas, un círculo con la foto (o las
+  iniciales) que lleva al perfil, con su nombre en `aria-label` y `title`
+  y foco visible con teclado; de día y de noche. `login.php` y
+  `registro.php` mandan al perfil. A los 30 minutos y 1 segundo sin uso,
+  la cabecera vuelve a "Iniciar sesión" y la cookie se borra. Cerrar
+  sesión, desde el perfil, borra la sesión del servidor y la cookie, y
+  queda en `auditoria` como `logout`; un GET a `salir.php` no cierra nada.
 - **Subidas**: JPG, PNG y WEBP se aceptan con nombre generado; al
   reemplazar queda un solo archivo. Se rechazan un `.php` declarado como
   imagen, un `.jpg` con PHP adentro, texto con nombre `.png`, GIF, SVG,

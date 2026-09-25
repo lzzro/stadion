@@ -67,7 +67,7 @@ stadion/
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
     ├── perfil.php          ← vista de perfil con pestañas: Datos, Mis torneos, Rendimiento
-    ├── cabecera.php        ← accionesCabecera(): Iniciar sesión, o nombre + Cerrar sesión
+    ├── cabecera.php        ← circuloPersona() y accionesCabecera(): Iniciar sesión, o el círculo
     ├── config/
     │   ├── database.php    ← conexión mysqli, sin credenciales
     │   ├── database.local.php.ejemplo  ← plantilla; la copia real no se versiona
@@ -116,11 +116,18 @@ Convenciones:
   vistas son nietas (queda explicado en `style.css`).
 - **Las páginas públicas son `.php`** (menos `panel.html` y `admin.html`):
   la primera línea incluye `apps/config/pagina.php`, que mira si hay sesión
-  vigente, y el bloque de la derecha de la cabecera sale de
-  `accionesCabecera($ruta_publica, $ruta_perfil, $ruta_salir)`. Sin sesión
-  imprime exactamente lo de siempre (Iniciar sesión · Crear torneo); con
-  sesión, el nombre (enlace al perfil) y Cerrar sesión, que es un formulario
-  con POST. Se eligió PHP y no un endpoint + JavaScript porque el servidor ya
+  vigente y, si la hay, lee la cuenta de la base (`$persona_sesion`); el
+  bloque de la derecha de la cabecera sale de
+  `accionesCabecera($ruta_publica, $ruta_perfil, $persona_sesion)`. Sin
+  sesión imprime exactamente lo de siempre (Iniciar sesión · Crear torneo);
+  con sesión, un solo círculo antes de Crear torneo: la foto, o las
+  iniciales sobre olivo pálido. Es un enlace al perfil con el nombre en
+  `aria-label` y `title`, y foco visible. El círculo de la cabecera y el
+  del perfil salen de la misma función, `circuloPersona()`; solo cambia
+  el tamaño (`.avatar-chico`: 30 px en el teléfono, 34 desde 768 px).
+  **Cerrar sesión no está en la cabecera**: está en el perfil, debajo del
+  nombre y el rol, como texto en versalitas, y sigue siendo un formulario
+  con POST a `salirController`. Se eligió PHP y no un endpoint + JavaScript porque el servidor ya
   sabe si hay sesión antes de mandar la página: sin parpadeo, sin más
   JavaScript que `tema.js`, y con redirecciones reales (`login.php` y
   `registro.php` mandan al perfil si ya hay sesión). `panel.html` y
@@ -152,6 +159,13 @@ Convenciones:
   un respaldo lleva adentro datos personales y la configuración con la
   contraseña de la base.
 - Nombres de archivo y de clase en español, sin tildes ni espacios.
+- **Nombres de personas en pantalla**: con `getNombreVisible()`,
+  `getApellidoVisible()` y `getNombreCompletoVisible()` de `Usuario`, que
+  usan `Usuario::paraMostrar()`. Si el texto está guardado entero en
+  minúscula, sube la primera letra (con funciones `mb_`, así respeta
+  tildes y ñ); si ya tiene alguna mayúscula, queda como la persona lo
+  escribió ("de Ítaca" no cambia). Solo al mostrar: la base no se toca y
+  los campos del formulario del perfil muestran lo guardado tal cual.
 
 ## Paleta y tipografía (para lo que se muestre en pantalla)
 
@@ -431,8 +445,10 @@ dejaban ver interioridades del código.
 - [x] Cabecera con sesión, perfil con pestañas y foto/portada —
       **Cabecera**: todas las páginas con el menú compartido pasaron a
       `.php` (ver Convenciones). Sin sesión la cabecera es idéntica a la de
-      antes (comparada píxel a píxel: 36 de 36); con sesión, nombre y
-      Cerrar sesión. `salirController.php` (con su puente `salir.php`)
+      antes (comparada píxel a píxel: 36 de 36). Con sesión, en su
+      rediseño (opción B), un círculo con la foto o las iniciales que lleva
+      al perfil, y Cerrar sesión pasa al perfil, debajo del nombre y el rol
+      (ver Convenciones). `salirController.php` (con su puente `salir.php`)
       cierra solo por POST con `cerrarSesion()`, que ahora borra también la
       cookie, deja `logout` en `auditoria` y vuelve al inicio. La sesión
       vencida por inactividad se refleja en la primera página que se abre.

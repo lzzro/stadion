@@ -269,8 +269,9 @@ Y la prueba que de verdad importa, porque ejercita el camino completo:
 4. Volvé al acceso e iniciá sesión con esa cuenta.
 5. En phpMyAdmin, `sgdm` → `usuario`: la fila tiene que estar con la columna
    `hash_password` empezando en `$2y$`, nunca la contraseña legible.
-6. Con la sesión abierta, arriba de cualquier página tiene que estar tu
-   nombre y **Cerrar sesión**.
+6. Con la sesión abierta, arriba de cualquier página tiene que estar un
+   círculo con tu foto (o tus iniciales) que lleva al perfil. **Cerrar
+   sesión** está en el perfil, debajo de tu nombre.
 
 Y la de la carpeta de subidas: creá a mano `public/subidas/prueba.php` con
 `<?php echo "CORRE"; ?>` y abrí `http://stadion.local/subidas/prueba.php`.
