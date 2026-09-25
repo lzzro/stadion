@@ -318,6 +318,17 @@ dejaban ver interioridades del código.
   tabla ancha estiraba la página entera. Resuelto con `min-width: 0` en las
   zonas del grid y sus hijos; ahora la tabla se desplaza dentro de su propio
   marco. Las 12 páginas quedan sin desborde en 390, 768 y 1024 px.
+- **Corregido de paso**: el marcador de la tarjeta "en vivo" del inicio
+  ("2 – 0") se partía en dos o tres renglones desde 768 px. **Un marcador
+  nunca se parte**: la clase `.marcador` (y `.partido .hora`, que en un
+  partido jugado lleva el resultado) va con `white-space: nowrap`; si
+  falta lugar, se parten los nombres. En la columna lateral la tarjeta
+  mide entre 140 y 250 px y tres columnas no entran ni partiendo los
+  nombres (ya se salía de la tarjeta en 1024 px, escondido por el
+  marcador partido): ahí `table.en-vivo` apila los dos equipos a la
+  izquierda y deja el marcador a la derecha, con Grid y media query. En
+  el teléfono sigue en tres columnas. Revisado en calendario, torneo,
+  llave y panel: ahí los marcadores no se partían.
 
 **En curso — segunda entrega:**
 - [x] Modelo relacional normalizado + DDL — `sql/schema.sql`, 16 tablas en
