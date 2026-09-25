@@ -45,13 +45,15 @@ stadion/
 │   ├── index.php  torneos.php  torneo.php  calendario.php  llave.php  crear.php
 │   ├── login.php  registro.php        ← páginas: la cabecera depende de la sesión
 │   ├── perfil.php  rendimiento.php    ← desvíos al perfil real
-│   ├── panel.html  admin.html         ← paneles de organizador y de sistema
+│   ├── admin.php           ← desvío a la administración real
+│   ├── panel.html          ← panel del organizador (maqueta)
 │   ├── subidas/            ← fotos y portadas; solo se versiona su .htaccess
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
 ├── .gitignore              ← excluye credenciales, respaldos y métricas
 ├── sql/
 │   ├── schema.sql          ← DDL + DCL; crea una base nueva desde cero
-│   └── migraciones/        ← cambios para bases ya creadas, a mano y en orden
+│   ├── migraciones/        ← cambios para bases ya creadas, a mano y en orden
+│   └── primer_administrador.sql  ← da el rol administrador a una cuenta, a mano
 ├── docs/
 │   ├── configuracion-apache.md  ← despliegue: virtual host y puesta en marcha
 │   ├── respaldos-cron.md   ← cron, respaldos y la decisión sobre Grafana
@@ -67,13 +69,15 @@ stadion/
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
     ├── perfil.php          ← vista de perfil con pestañas: Datos, Mis torneos, Rendimiento
+    ├── admin.php           ← vista de administración (solo con el rol administrador)
     ├── cabecera.php        ← circuloPersona() y accionesCabecera(): Iniciar sesión, o el círculo
     ├── config/
     │   ├── database.php    ← conexión mysqli, sin credenciales
     │   ├── database.local.php.ejemplo  ← plantilla; la copia real no se versiona
     │   ├── sesion.php      ← vigencia de la sesión (30 min de inactividad)
+    │   ├── csrf.php        ← token por sesión de todos los formularios
     │   ├── pagina.php      ← arranque de cada página .php: sesión y rutas
-    │   └── rutas_paginas.php  ← direcciones del perfil y la salida (el hosting tiene otras)
+    │   └── rutas_paginas.php  ← direcciones del perfil y la administración (el hosting tiene otras)
     ├── controllers/
     │   └── xxxController.php
     └── models/
@@ -97,7 +101,10 @@ Convenciones:
   `crear.php` y `panel.html` → Organizadores. El perfil real
   (`apps/perfil.php`) no cuelga de ninguna entrada y no marca ninguna, y
   `llave.php`, que es el detalle de un torneo, marca Torneos.
-  `panel.html` y `admin.html` reemplazan el menú compartido por el suyo.
+  `panel.html` y la administración (`apps/admin.php`) reemplazan el menú
+  compartido por el suyo. El de la administración son enlaces a sus
+  secciones (Pedidos, Cuentas, Módulos, Auditoría) en una sola página que
+  se recorre, sin vistas que cambien: no marca ninguno.
   Al agregar una página, marcar su entrada acá también.
   **Las excepciones son las dos páginas con pestañas**, donde la misma
   dirección muestra una vista u otra según el ancla: ahí no hay marca
@@ -114,7 +121,7 @@ Convenciones:
   no figura entre los temas de clase. El combinador `~` de las pestañas no
   servía en ninguna de las dos, porque el menú es hijo de `.pagina` y las
   vistas son nietas (queda explicado en `style.css`).
-- **Las páginas públicas son `.php`** (menos `panel.html` y `admin.html`):
+- **Las páginas públicas son `.php`** (menos `panel.html`):
   la primera línea incluye `apps/config/pagina.php`, que mira si hay sesión
   vigente y, si la hay, lee la cuenta de la base (`$persona_sesion`); el
   bloque de la derecha de la cabecera sale de
@@ -130,13 +137,29 @@ Convenciones:
   con POST a `salirController`. Se eligió PHP y no un endpoint + JavaScript porque el servidor ya
   sabe si hay sesión antes de mandar la página: sin parpadeo, sin más
   JavaScript que `tema.js`, y con redirecciones reales (`login.php` y
-  `registro.php` mandan al perfil si ya hay sesión). `panel.html` y
-  `admin.html` siguen siendo maquetas de una cuenta fija (Club Sur, el
-  administrador) con su propio menú: ponerles el nombre de la sesión
-  mezclaría a la persona real con la identidad de muestra.
+  `registro.php` mandan al perfil si ya hay sesión). `panel.html` sigue
+  siendo la maqueta de una cuenta fija (Club Sur) con su propio menú:
+  ponerle el nombre de la sesión mezclaría a la persona real con la
+  identidad de muestra. `admin.html` ya no existe: `admin.php` desvía a
+  la administración real (ver Estado actual).
   Al agregar una página: `.php`, con esa primera línea, y la llamada a
   `accionesCabecera()` en el `<header>`. `armar-deploy.sh` cambia sola la
   ruta del arranque en la copia del hosting.
+- **Todo formulario que cambia algo lleva el token de `apps/config/csrf.php`**:
+  `campoCsrf()` dentro del `<form>`, y el controlador llama a
+  `csrfValido()` antes de tocar nada. Si falla, `rechazarCsrf()` responde
+  403 con el aviso y no se hace nada. Un token por sesión, el mismo para
+  todos los formularios; `renovarCsrf()` lo cambia al iniciar sesión.
+  Lo llevan perfil, foto, portada, cerrar sesión, pedir rol, aprobar,
+  rechazar, login y registro. `login.php` y `registro.php` llaman a
+  `tokenCsrf()` antes de mandar HTML: son las únicas páginas que abren
+  sesión sin nadie adentro. Al agregar un formulario, las dos cosas.
+  **Pendiente de confirmación docente**: la defensa contra CSRF no figura
+  entre los temas de clase.
+- **Lo que solo puede hacer un rol se comprueba en el servidor, en cada
+  pedido**, con la cuenta de la sesión leída de la base (`tieneRol()`), no
+  escondiendo el enlace. La administración: sin sesión manda al acceso,
+  sin el rol responde 403 y no muestra ni hace nada.
 - Los `require_once` de los controladores van con `__DIR__` adelante, no
   con rutas relativas sueltas. Es lo que permite que el mismo controlador
   ande llamado directo (en XAMPP) o desde un puente del hosting, sin
@@ -285,7 +308,7 @@ dejaban ver interioridades del código.
   `tramo-vacio`, no `barra`, que ya es la barra de avance de 2px de las
   tarjetas. Sin botón de exportar.
   Configuración es de solo lectura: el organizador (Club Sur,
-  torneos@clubsur.uy, tal como en `admin.html`, sin teléfono ni dirección
+  torneos@clubsur.uy, tal como en la vieja maqueta `admin.html`, sin teléfono ni dirección
   porque no existen) y los valores por defecto de cada torneo nuevo, que
   son los del constructor de `ConfiguracionTorneo` y los DEFAULT de
   `configuracion_torneo` (3/1/0 puntos, admite empate sí, clasifican a
@@ -306,8 +329,9 @@ dejaban ver interioridades del código.
   `rendimiento.html` (tres indicadores de Física y la evolución del tiempo
   de reacción en un SVG; hoy es la pestaña Rendimiento del perfil real, y
   `rendimiento.php` desvía ahí), `panel.html` (panel del organizador) y
-  `admin.html` (usuarios, módulos y registro de auditoría). Ninguna toca
-  `apps/` ni la base: llevan los datos de ejemplo escritos a mano.
+  `admin.html` (usuarios, módulos y registro de auditoría; hoy es la
+  administración real y `admin.php` desvía ahí). Ninguna toca `apps/` ni
+  la base: llevan los datos de ejemplo escritos a mano.
   La navegación compartida apunta ahora a destinos que existen:
   Calendario → `calendario.php`, Posiciones → `torneo.php#posiciones`,
   Organizadores → `panel.html`.
@@ -332,7 +356,7 @@ dejaban ver interioridades del código.
 
 **En curso — segunda entrega:**
 - [x] Modelo relacional normalizado + DDL — `sql/schema.sql`, 16 tablas en
-      3FN, probado en MariaDB 10.11 (la versión de la VM).
+      3FN (17 con `pedido_rol`, de la fase 1 del motor), probado en MariaDB 10.11 (la versión de la VM).
 - [x] DCL: usuarios de base de datos con restricciones (`GRANT`) — en la
       sección 12 de `sql/schema.sql`, tres usuarios por nivel de
       privilegio. **Pendiente de confirmación docente**: el DCL no se dio
@@ -496,6 +520,71 @@ dejaban ver interioridades del código.
       **Pendiente de confirmación docente**: la subida de archivos
       (`$_FILES`, `move_uploaded_file`, finfo) y los archivos `.htaccess`
       no figuran entre los temas de clase.
+
+- [x] Fase 1 del motor de torneos: roles — el rol **organizador** se pide
+      desde el perfil y lo aprueba un **administrador**. Todavía nada de
+      torneos: el botón "Crear torneo" de la cabecera queda como está.
+      **Base**: tabla `pedido_rol` (quién pide, qué rol, `pendiente` /
+      `aprobado` / `rechazado`, fechas de pedido y resolución, quién
+      resuelve), con CHECK de que un pedido resuelto tiene fecha y
+      responsable, de que la resolución no es anterior al pedido y de que
+      nadie resuelve el suyo. Un solo pendiente por cuenta y rol lo
+      garantiza la base: columna calculada `pendiente_de` (el id de la
+      cuenta mientras está pendiente, NULL después) con UNIQUE, que es como
+      MariaDB emula un índice único parcial. **Pendiente de confirmación
+      docente**: las columnas calculadas (`GENERATED ALWAYS AS`) no figuran
+      entre los temas de clase. `sgdm_app` tiene INSERT y UPDATE sobre la
+      tabla, sin DELETE: un pedido se crea y se resuelve, no se borra. La
+      auditoría suma las acciones `pedido_rol`, `aprobacion` y `rechazo`.
+      Todo en `schema.sql` y en `sql/migraciones/003_pedidos_de_rol.sql`,
+      probada sobre una base con el esquema anterior (el `GRANT` del final
+      da error en el hosting, y es esperable).
+      Clases `PedidoRol` (las reglas: solo se resuelve un pendiente, solo
+      lo resuelve un administrador, nunca el propio) y
+      `PedidoRolRepositorio` (aprobar cambia el pedido y agrega el rol en
+      una misma transacción).
+      **Perfil**: en la tarjeta Roles, quien no es organizador ve "Pedir el
+      rol de organizador"; con un pedido pendiente, "pedido en revisión
+      desde el…"; si se lo rechazaron, la fecha del rechazo y el botón otra
+      vez; un organizador no ve nada. El rol pedido no se lee del
+      formulario. La tarjeta Roles y La cuenta pasaron de tabla a lista
+      apilada (`.lista-apilada`), porque en la columna lateral se salían de
+      la tarjeta.
+      **Administración** (`apps/controllers/adminController.php`, vista
+      `apps/admin.php`, puente `admin.php` en el hosting): pedidos
+      pendientes con Aprobar y Rechazar (un pedido propio dice "Lo resuelve
+      otra cuenta de la administración", sin botones), todas las cuentas
+      de la base con roles, estado y último acceso, y las últimas 30 filas
+      de la auditoría, en sustantivos ("Aprobación de rol · Rol organizador
+      para …"). De la vieja `admin.html`: usuarios y auditoría son reales
+      y **las cuentas inventadas (Comunidad Vórtice, Club Sur, Liceo N.º 3,
+      Tienda El Dado) no están**; Módulos del sistema queda de muestra, con
+      la marca `.muestra`, porque la base tiene los módulos pero no si
+      están encendidos; "Último respaldo", "+ Nuevo usuario administrativo"
+      y los enlaces sin destino se quitaron. Se llega desde el perfil
+      ("Administración →", solo con el rol) o por `admin.php`.
+      **Primer administrador**: `sql/primer_administrador.sql`, a mano en
+      phpMyAdmin una vez por base, reemplazando `CORREO_DE_LA_CUENTA` en el
+      pegado (en el repositorio no hay ningún correo real). Deja la fila
+      en la auditoría ("Primer administrador") y no hace nada si se repite.
+      Un administrador no aprueba su propio pedido: para que una cuenta
+      sea administradora y organizadora hace falta otra cuenta
+      administradora.
+      **CSRF** en todos los formularios que cambian algo (ver
+      Convenciones). De paso, `cerrarSesion()` deja preparado un
+      identificador nuevo: sin eso, `login.php` abierto justo después de
+      vencer la sesión reusaba el identificador de la cerrada y el
+      navegador no lo mandaba de vuelta, así que el inicio de sesión
+      siguiente fallaba por token.
+      **Probado** con Apache real en las dos disposiciones (mod_php local y
+      PHP-FPM como en cPanel): 99 comprobaciones de permisos y CSRF en cada
+      una — visitante, jugador, organizador y administrador; el POST armado
+      a mano por una cuenta sin el rol (403, nada cambia); el administrador
+      aprobando y rechazando su propio pedido (aviso, sigue pendiente, y la
+      base también lo frena); dos pendientes a la vez (aviso y error 1062
+      de la base); DELETE de `sgdm_app` sobre `pedido_rol` (1142); y cada
+      formulario sin token, con uno inventado y con el de otra sesión (403,
+      nada cambia).
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.

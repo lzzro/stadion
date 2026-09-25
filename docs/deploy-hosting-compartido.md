@@ -1,8 +1,8 @@
 # Subir Stadion a un hosting compartido (cPanel)
 
 Pasos para publicar el sitio en un hosting compartido tipo Namecheap, con
-las tres funciones reales andando: **alta de cuenta, inicio de sesión y
-perfil**.
+las funciones reales andando: **alta de cuenta, inicio de sesión, perfil,
+pedido del rol de organizador y administración**.
 
 > **Nada de esto se hace solo.** Los archivos están preparados en el
 > repositorio, pero la subida, la base de datos y la configuración las hacés
@@ -20,8 +20,9 @@ perfil**.
 6. [Paso 4 — Completar la configuración](#paso-4--completar-la-configuración)
 7. [Paso 5 — Permisos](#paso-5--permisos)
 8. [Paso 6 — Probarlo](#paso-6--probarlo)
-9. [Si algo falla](#si-algo-falla)
-10. [Qué se probó y qué no](#qué-se-probó-y-qué-no)
+9. [Paso 7 — El primer administrador](#paso-7--el-primer-administrador)
+10. [Si algo falla](#si-algo-falla)
+11. [Qué se probó y qué no](#qué-se-probó-y-qué-no)
 
 ---
 
@@ -41,7 +42,8 @@ este documento:
 │   ├── index.php  torneos.php  torneo.php  calendario.php  llave.php
 │   ├── crear.php  login.php  registro.php
 │   ├── perfil.php  rendimiento.php   ← desvíos al perfil real
-│   ├── panel.html  admin.html
+│   ├── admin.php             ← desvío a la administración real
+│   ├── panel.html
 │   ├── css/  js/  img/
 │   ├── subidas/              ← fotos de perfil y portadas que sube la gente
 │   │   └── .htaccess         ← impide ejecutar nada en esta carpeta
@@ -49,7 +51,8 @@ este documento:
 │       ├── registrar.php     ← puentes: unas pocas líneas cada uno
 │       ├── login.php
 │       ├── perfil.php
-│       └── salir.php
+│       ├── salir.php
+│       └── admin.php
 │
 └── stadion_app/              ← FUERA de public_html. Nadie lo alcanza
     ├── config/
@@ -57,13 +60,15 @@ este documento:
     │   ├── database.local.php        ← lo escribís vos, con la contraseña
     │   ├── database.local.php.ejemplo
     │   ├── sesion.php
+    │   ├── csrf.php                  ← el token de los formularios
     │   ├── pagina.php                ← lo incluye cada página .php
     │   └── rutas_paginas.php         ← direcciones del hosting (generado)
     ├── controllers/          ← los controladores de verdad
     ├── models/
     ├── cabecera.php
     ├── index.php
-    └── perfil.php
+    ├── perfil.php
+    └── admin.php
 ```
 
 Las páginas son `.php` desde que la cabecera depende de la sesión: cada una
@@ -89,7 +94,7 @@ entre "está prohibido pedirlo" y "no hay forma de pedirlo".
 ### Qué son los puentes
 
 Los formularios necesitan llegar a algo por dirección web, y los
-controladores están afuera. Los puentes resuelven eso: son cuatro archivos
+controladores están afuera. Los puentes resuelven eso: son cinco archivos
 cortos dentro de `public_html/controllers/` que no deciden nada, solo llaman
 al controlador de verdad.
 
@@ -121,7 +126,7 @@ en `apps/`, se rehace con:
 ./scripts/armar-deploy.sh
 ```
 
-El script copia todo, ajusta las rutas de los formularios, escribe los tres
+El script copia todo, ajusta las rutas de los formularios, escribe los cinco
 puentes, y **comprueba que la configuración local con tu contraseña de XAMPP
 no se haya colado en la copia**. Si aparece, corta con error.
 
@@ -182,12 +187,12 @@ Dos cosas para mirar antes:
   compartida no tiene. Los usuarios ya los creaste vos por la interfaz de
   cPanel en el paso 1, que es el equivalente. Si la importación se queja al
   llegar ahí, **es esperable y el resto ya se creó**: comprobá que estén las
-  16 tablas y seguí.
+  17 tablas y seguí.
 - Si preferís evitar el error, borrá esa sección del archivo antes de
   subirlo. No hace falta tocar el `schema.sql` del repositorio: copialo,
   recortá la copia y subí esa.
 
-Cuando termina, en la lista de la izquierda tienen que aparecer **16 tablas**
+Cuando termina, en la lista de la izquierda tienen que aparecer **17 tablas**
 y los catálogos (`rol`, `disciplina`, `tipo_torneo`, `modulo_competencia`)
 ya con sus filas.
 
@@ -204,6 +209,18 @@ con `lucasmar_sgdm` elegida, pestaña **SQL** o **Import**.
 |---|---|
 | `001_check_puntos_victoria.sql` | `ck_config_victoria`: los puntos por victoria van de 1 a 10 |
 | `002_imagenes_usuario.sql` | `foto_perfil` y `foto_portada` en `usuario`, con sus dos CHECK. **Sin esta, el perfil no abre** |
+| `003_pedidos_de_rol.sql` | La tabla `pedido_rol` y las tres acciones nuevas de `auditoria` (`pedido_rol`, `aprobacion`, `rechazo`). **Sin esta, pedir el rol de organizador no anda** |
+
+La 003 termina con un `GRANT` para `sgdm_app`. **En el hosting ese último
+bloque da error, y es esperable**: el permiso ya lo diste en cPanel en el
+paso 1. Todo lo de arriba del `GRANT` ya quedó hecho; comprobalo con la
+tabla `pedido_rol` en la lista de la izquierda.
+
+cPanel da los permisos para la base entera, no tabla por tabla. Por eso el
+"sin `DELETE` sobre `pedido_rol`" del DCL solo se aplica tal cual en
+XAMPP; en el hosting, si marcaste `DELETE` en el paso 1, alcanza a todas
+las tablas. Los pedidos igual no se borran: ningún código del sitio lo
+intenta.
 
 Una base importada con el `schema.sql` actual ya las trae y no necesita
 ninguna.
@@ -250,7 +267,8 @@ hosting y en ningún otro lado. Para actualizar el sitio sin perderlas:
 - Las páginas viejas terminadas en `.html` (`index.html`, `torneos.html`,
   `login.html`…) ya no se usan: borralas. Si queda alguna, igual no molesta,
   porque `public_html/.htaccess` manda cada dirección vieja a la nueva.
-  `panel.html` y `admin.html` **no se borran**: siguen siendo `.html`.
+  `admin.html` también se borra: ahora es `admin.php`, que lleva a la
+  administración real. `panel.html` **no se borra**: sigue siendo `.html`.
 
 Para confirmar que quedó bien, en `/home/TU_CUENTA/` tenés que ver las dos
 carpetas una al lado de la otra:
@@ -339,6 +357,8 @@ de arriba.
 | 14 | Intentar subir un `.txt` o un `.pdf` renombrado a `.jpg` | "Solo se aceptan imagenes JPG, PNG o WEBP." |
 | 15 | En el perfil, **Cerrar sesión** (debajo del nombre) | Vuelve a la portada, con "Iniciar sesión" arriba |
 | 16 | Abrir `/controllers/perfil.php` en una ventana privada | Manda a `login.php`: sin sesión no hay perfil |
+| 17 | Entrar con la cuenta de prueba y, en el perfil, **Pedir el rol de organizador** (tarjeta Roles) | "El pedido del rol de organizador queda en revision." y la tarjeta dice "pedido en revisión" |
+| 18 | Abrir `https://TU-DOMINIO/admin.php` con esa misma cuenta | "Esta pagina es solo para la administracion.": sin el rol, no se ve nada |
 
 ### La prueba de la carpeta de subidas
 
@@ -388,6 +408,40 @@ entrega, no en esta.
 
 ---
 
+## Paso 7 — El primer administrador
+
+Los pedidos de rol los aprueba una cuenta con el rol **administrador**, y
+ese rol no se pide desde el sitio: la primera cuenta de la administración
+se nombra a mano, una sola vez por base.
+
+1. Crear **tu** cuenta desde `registro.php`, como cualquier otra. Conviene
+   que no sea la de prueba del paso 6.
+2. En phpMyAdmin, con `lucasmar_sgdm` elegida → pestaña **SQL**.
+3. Abrir `sql/primer_administrador.sql` del repositorio, copiar **todo** y
+   pegarlo.
+4. Reemplazar `CORREO_DE_LA_CUENTA` por el correo de tu cuenta, entre las
+   comillas. **En el pegado, no en el archivo del repositorio**: ahí no va
+   ningún correo real.
+5. **Go**. La última consulta muestra tu cuenta con `administrador,jugador`.
+   Si no muestra ninguna fila, el correo no coincide: revisá cómo lo
+   escribiste.
+
+Correrlo dos veces no hace daño. La asignación queda en `auditoria`.
+
+Después, para probar la administración:
+
+| # | Qué hacer | Qué tiene que pasar |
+|---|---|---|
+| 19 | Entrar con tu cuenta y, en el perfil, **Administración →** (tarjeta Roles) | La administración: pedidos de rol, cuentas, módulos (con la marca "De muestra") y registro de auditoría |
+| 20 | En **Pedidos de rol**, **Rechazar** el de la cuenta de prueba | El pedido desaparece; en el perfil de la cuenta de prueba dice que quedó rechazado y el botón vuelve a estar |
+| 21 | Pedirlo otra vez desde la cuenta de prueba y **Aprobar** | La cuenta de prueba tiene el rol `organizador`, y en su perfil ya no aparece el botón |
+| 22 | En phpMyAdmin, tabla `auditoria` | Filas `pedido_rol`, `rechazo` y `aprobacion`, y en el registro de la administración con esos nombres |
+
+Un pedido propio no se puede aprobar: si tu cuenta pide ser organizadora,
+lo tiene que aprobar **otra** cuenta con el rol administrador.
+
+---
+
 ## Si algo falla
 
 | Síntoma | Causa probable | Solución |
@@ -396,16 +450,19 @@ entrega, no en esta.
 | "No hay conexión con la base de datos" | Los datos están, pero alguno no coincide | Revisá el prefijo de la cuenta en el nombre de la base y del usuario |
 | El formulario da 404 | Los puentes no quedaron en `public_html/controllers/` | Paso 3 |
 | La página de resultado sale sin estilos | Falta `css/` en `public_html/` | Paso 3 |
-| "El sitio no encuentra su aplicación" | `stadion_app/` no está al lado de `public_html/` | Paso 3, o cambiá la línea de `$APLICACION` en los cuatro puentes |
+| "El sitio no encuentra su aplicación" | `stadion_app/` no está al lado de `public_html/` | Paso 3, o cambiá la línea de `$APLICACION` en los cinco puentes |
 | Una página da error 500 o sale en blanco apenas se abre | `stadion_app/` no está al lado de `public_html/`: cada página lo incluye | Paso 3 |
 | La portada muestra una lista de archivos, o la vieja `index.html` | Falta `public_html/.htaccess` | Paso 3: mostrá los archivos ocultos y comprobá que esté |
 | El perfil no abre y el `error_log` dice `Unknown column 'foto_perfil'` | Falta la migración 002 | Paso 2, **Si la base ya estaba importada de antes** |
+| "El pedido no se puede registrar por ahora." al pedir el rol | Falta la migración 003 | Paso 2, **Si la base ya estaba importada de antes** |
+| "El formulario no corresponde a esta sesion." | La página quedó abierta más de media hora (la sesión venció), o el navegador no guarda cookies para el sitio | Volver a abrir la página y repetir. Si pasa siempre, revisar que el navegador acepte cookies |
+| La administración dice "Esta pagina es solo para la administracion." con tu cuenta | Falta el paso 7, o se corrió con otro correo | Paso 7 |
 | "La imagen no se puede guardar por ahora." | La carpeta `public_html/subidas/` no existe o no tiene `755` | Paso 3 y paso 5. **Nunca `777`** |
 | "La imagen supera los 2 MB." con una imagen más chica | El límite de subida del hosting es menor que 2 MB | **MultiPHP INI Editor** en cPanel: `upload_max_filesize` en `2M` o más |
 | Error 500 en cualquier foto de `subidas/` | El hosting no admite alguna línea del `.htaccess` de `subidas/` | Mirá el `error_log`: dice cuál. Si es `Options -Indexes`, borrá solo esa línea; las otras capas siguen protegiendo |
 | La prueba de la carpeta de subidas muestra `CORRE` | El `.htaccess` de `subidas/` no está, o el hosting ignora los `.htaccess` | Mostrá los archivos ocultos y comprobá que esté. Si está, consultá al soporte del hosting si admite `.htaccess` (`AllowOverride`) |
 | El alta falla al asignar el rol | La tabla `rol` quedó vacía | Reimportá `schema.sql`, paso 2 |
-| Error al importar, en los `CREATE USER` | Es la sección 12 del DCL | Esperable: los usuarios ya los creaste en cPanel. Comprobá que estén las 16 tablas |
+| Error al importar, en los `CREATE USER` | Es la sección 12 del DCL | Esperable: los usuarios ya los creaste en cPanel. Comprobá que estén las 17 tablas |
 | Entra pero el perfil manda al acceso | Pasaron 30 minutos sin actividad y la sesión se cerró sola | Volvé a entrar. Es el comportamiento buscado |
 | Página en blanco, sin ningún mensaje | Un error de PHP que el hosting no muestra | **Errors** en cPanel, o el `error_log` de la carpeta |
 | `https://TU-DOMINIO/stadion_app/...` muestra algo | `stadion_app` quedó dentro de `public_html` | Paso 3. **Urgente**: cambiá la contraseña de la base después de moverla |

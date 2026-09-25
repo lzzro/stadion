@@ -262,8 +262,8 @@ del paso 3.
 
 Y la prueba que de verdad importa, porque ejercita el camino completo:
 
-1. Entrá a `http://stadion.local/login.php`.
-2. Creá una cuenta con el formulario de abajo.
+1. Entrá a `http://stadion.local/registro.php`.
+2. Creá una cuenta con el formulario.
 3. Tiene que aparecer la página de resultado **con estilos** y el mensaje
    `La cuenta queda abierta a nombre de …`.
 4. Volvé al acceso e iniciá sesión con esa cuenta.
@@ -272,6 +272,12 @@ Y la prueba que de verdad importa, porque ejercita el camino completo:
 6. Con la sesión abierta, arriba de cualquier página tiene que estar un
    círculo con tu foto (o tus iniciales) que lleva al perfil. **Cerrar
    sesión** está en el perfil, debajo de tu nombre.
+7. Para la administración, en phpMyAdmin (`sgdm` → pestaña **SQL**) pegá
+   `sql/primer_administrador.sql` con tu correo en lugar de
+   `CORREO_DE_LA_CUENTA` (en el pegado, no en el archivo) y dale a
+   **Continuar**. En tu perfil aparece **Administración →**; con otra
+   cuenta, `http://stadion.local/admin.php` dice que la página es solo para
+   la administración.
 
 Y la de la carpeta de subidas: creá a mano `public/subidas/prueba.php` con
 `<?php echo "CORRE"; ?>` y abrí `http://stadion.local/subidas/prueba.php`.
@@ -297,6 +303,8 @@ Si el paso 2 da 404, falta el `Alias /apps/controllers`.
 | `http://stadion.local/` lista archivos en vez de la portada | Apache no lee `public/.htaccess` | `AllowOverride All` en el `<Directory>` de `public`, paso 3 |
 | `subidas/prueba.php` muestra `CORRE` | Apache no lee `public/subidas/.htaccess` | Lo mismo: `AllowOverride All`, paso 3 |
 | El perfil no abre: `Unknown column 'foto_perfil'` | Falta la migración 002 | `sql/migraciones/002_imagenes_usuario.sql` en phpMyAdmin, con `sgdm` elegida |
+| "El pedido no se puede registrar por ahora." al pedir el rol de organizador | Falta la migración 003 | `sql/migraciones/003_pedidos_de_rol.sql` en phpMyAdmin, con `sgdm` elegida (en XAMPP el `GRANT` del final sí corre) |
+| "El formulario no corresponde a esta sesion." | La página quedó abierta más de media hora, o el navegador no guarda cookies de `stadion.local` | Volver a abrir la página y repetir |
 
 ---
 

@@ -1,6 +1,6 @@
 <?php
 # =====================================================================
-# Puente: perfil
+# Puente: administracion
 # Proyecto SGDM - Stadion (Agon) - Lucas Martiarena
 # ---------------------------------------------------------------------
 # Generado por scripts/armar-deploy.sh. No editar a mano.
@@ -37,4 +37,4 @@ if (!is_dir($APLICACION)) {
     exit;
 }
 
-require_once $APLICACION . '/controllers/perfilController.php';
+require_once $APLICACION . '/controllers/adminController.php';
