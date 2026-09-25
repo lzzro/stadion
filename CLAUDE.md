@@ -41,9 +41,12 @@ Lo dado en clase, por materia:
 ```
 stadion/
 ├── public/
-│   ├── index.html          ← vista de entrada / formulario
-│   ├── calendario.html  llave.html  rendimiento.html  ← maquetado
-│   ├── panel.html  admin.html       ← paneles de organizador y de sistema
+│   ├── .htaccess           ← DirectoryIndex index.php y desvío de las .html viejas
+│   ├── index.php  torneos.php  torneo.php  calendario.php  llave.php  crear.php
+│   ├── login.php  registro.php        ← páginas: la cabecera depende de la sesión
+│   ├── perfil.php  rendimiento.php    ← desvíos al perfil real
+│   ├── panel.html  admin.html         ← paneles de organizador y de sistema
+│   ├── subidas/            ← fotos y portadas; solo se versiona su .htaccess
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
 ├── .gitignore              ← excluye credenciales, respaldos y métricas
 ├── sql/
@@ -58,16 +61,19 @@ stadion/
 │   ├── metricas.sh         ← lectura de disco, memoria y servicios
 │   ├── armar-deploy.sh     ← rehace deploy/ desde public/ y apps/
 │   └── respaldo.local.cnf.ejemplo  ← plantilla; la copia real no se versiona
-├── deploy/hosting-compartido/  ← GENERADO, no editar a mano
+├── deploy/hosting-compartido/  ← GENERADO, no editar a mano (sin fotos en subidas/)
 │   ├── public_html/        ← lo único que el hosting publica
 │   └── stadion_app/        ← la aplicación, fuera del alcance web
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
-    ├── perfil.php          ← vista de perfil, con los datos de la base
+    ├── perfil.php          ← vista de perfil con pestañas: Datos, Mis torneos, Rendimiento
+    ├── cabecera.php        ← accionesCabecera(): Iniciar sesión, o nombre + Cerrar sesión
     ├── config/
     │   ├── database.php    ← conexión mysqli, sin credenciales
     │   ├── database.local.php.ejemplo  ← plantilla; la copia real no se versiona
-    │   └── sesion.php      ← vigencia de la sesión (30 min de inactividad)
+    │   ├── sesion.php      ← vigencia de la sesión (30 min de inactividad)
+    │   ├── pagina.php      ← arranque de cada página .php: sesión y rutas
+    │   └── rutas_paginas.php  ← direcciones del perfil y la salida (el hosting tiene otras)
     ├── controllers/
     │   └── xxxController.php
     └── models/
@@ -86,18 +92,18 @@ Convenciones:
 - Sin routing, sin JavaScript salvo lo mínimo indispensable. Sesiones solo
   las mínimas para que el inicio de sesión signifique algo (ver arriba).
 - **La marca `class="activo"` del menú compartido va escrita a mano en cada
-  página.** Cada una marca la entrada de la que es destino: `index.html` →
-  Inicio, `torneos.html` → Torneos, `calendario.html` → Calendario,
-  `crear.html` y `panel.html` → Organizadores. Las que no cuelgan de ninguna
-  entrada (`perfil.html`, `rendimiento.html`) no marcan ninguna, y
-  `llave.html`, que es el detalle de un torneo, marca Torneos.
+  página.** Cada una marca la entrada de la que es destino: `index.php` →
+  Inicio, `torneos.php` → Torneos, `calendario.php` → Calendario,
+  `crear.php` y `panel.html` → Organizadores. El perfil real
+  (`apps/perfil.php`) no cuelga de ninguna entrada y no marca ninguna, y
+  `llave.php`, que es el detalle de un torneo, marca Torneos.
   `panel.html` y `admin.html` reemplazan el menú compartido por el suyo.
   Al agregar una página, marcar su entrada acá también.
   **Las excepciones son las dos páginas con pestañas**, donde la misma
   dirección muestra una vista u otra según el ancla: ahí no hay marca
   escrita a mano, la pone el CSS.
-  En `torneo.html`, sin ancla es el detalle de un torneo y marca Torneos,
-  igual que `llave.html`; con `#posiciones` marca Posiciones, que es a
+  En `torneo.php`, sin ancla es el detalle de un torneo y marca Torneos,
+  igual que `llave.php`; con `#posiciones` marca Posiciones, que es a
   donde apunta ese enlace del menú. El gancho es la clase `ficha-torneo`.
   En `panel.html` el menú es el suyo propio y hace de barra de pestañas:
   sin ancla marca Resumen, y con `#mis-torneos`, `#participantes`,
@@ -108,6 +114,22 @@ Convenciones:
   no figura entre los temas de clase. El combinador `~` de las pestañas no
   servía en ninguna de las dos, porque el menú es hijo de `.pagina` y las
   vistas son nietas (queda explicado en `style.css`).
+- **Las páginas públicas son `.php`** (menos `panel.html` y `admin.html`):
+  la primera línea incluye `apps/config/pagina.php`, que mira si hay sesión
+  vigente, y el bloque de la derecha de la cabecera sale de
+  `accionesCabecera($ruta_publica, $ruta_perfil, $ruta_salir)`. Sin sesión
+  imprime exactamente lo de siempre (Iniciar sesión · Crear torneo); con
+  sesión, el nombre (enlace al perfil) y Cerrar sesión, que es un formulario
+  con POST. Se eligió PHP y no un endpoint + JavaScript porque el servidor ya
+  sabe si hay sesión antes de mandar la página: sin parpadeo, sin más
+  JavaScript que `tema.js`, y con redirecciones reales (`login.php` y
+  `registro.php` mandan al perfil si ya hay sesión). `panel.html` y
+  `admin.html` siguen siendo maquetas de una cuenta fija (Club Sur, el
+  administrador) con su propio menú: ponerles el nombre de la sesión
+  mezclaría a la persona real con la identidad de muestra.
+  Al agregar una página: `.php`, con esa primera línea, y la llamada a
+  `accionesCabecera()` en el `<header>`. `armar-deploy.sh` cambia sola la
+  ruta del arranque en la copia del hosting.
 - Los `require_once` de los controladores van con `__DIR__` adelante, no
   con rutas relativas sueltas. Es lo que permite que el mismo controlador
   ande llamado directo (en XAMPP) o desde un puente del hosting, sin
@@ -184,8 +206,8 @@ dejaban ver interioridades del código.
 **Hecho:**
 - Maquetado HTML/CSS mobile-first de 7 páginas (inicio, torneos, detalle,
   perfil, crear, login, registro) — primera entrega de Fullstack. El
-  acceso quedó separado en dos: `login.html` solo inicia sesión y
-  `registro.html` solo da de alta, cada una con su panel de mármol y un
+  acceso quedó separado en dos: `login.php` solo inicia sesión y
+  `registro.php` solo da de alta, cada una con su panel de mármol y un
   enlace a la otra. Toda cuenta nace con el rol `jugador`: en ninguna
   pantalla se pregunta por el rol.
 - Identidad visual completa (Agón y Stadion).
@@ -195,11 +217,11 @@ dejaban ver interioridades del código.
   atributo y guarda la preferencia; el resto lo resuelve el CSS.
 - Sistema de estados de torneo: chip reusable `.estado` con cinco
   variantes (`en-vivo`, `inscripcion`, `en-juego`, `vencedor`, `cerrado`),
-  cada una con color **y** forma, aplicado en `torneos.html`, `torneo.html`
-  y `perfil.html`.
-- Pestañas que cambian de contenido **sin JavaScript**, en `torneo.html`:
+  cada una con color **y** forma, aplicado en `torneos.php`, `torneo.php`
+  y `perfil.php`.
+- Pestañas que cambian de contenido **sin JavaScript**, en `torneo.php`:
   las cinco andan — Resumen, Calendario (el de **este** torneo, no el del
-  sitio, que es `calendario.html`), Posiciones, Participantes y Reglas. Cada
+  sitio, que es `calendario.php`), Posiciones, Participantes y Reglas. Cada
   vista es un bloque con su id y su propia barra de pestañas; el selector
   `:target` muestra la que coincide con el ancla de la dirección.
   **Regla al agregar una pestaña nueva**: la vista por defecto va **última**
@@ -209,13 +231,13 @@ dejaban ver interioridades del código.
   hace falta apagarlas: solo se prende la que coincide con el ancla, y ancla
   hay una sola. Cambiar cuál es la vista por defecto es mover su bloque al
   final y correr los nombres de las tres reglas del CSS, nada más.
-  **Sin ancla se ve Resumen.** `torneo.html#posiciones`, que es a donde
+  **Sin ancla se ve Resumen.** `torneo.php#posiciones`, que es a donde
   apunta el menú compartido, sigue abriendo Posiciones (probado desde las
   cinco páginas que tienen ese menú).
   El puntaje que muestra Reglas (3/1/0) es el mismo que traen por defecto
   `ConfiguracionTorneo` y la tabla `configuracion_torneo`, y la ronda en
   curso que muestran Resumen y Calendario es la 8, que es la que se deduce
-  de los `PJ = 7` de la tabla de posiciones y de `calendario.html`.
+  de los `PJ = 7` de la tabla de posiciones y de `calendario.php`.
   **La misma mecánica está en `panel.html`**, con Resumen (por defecto, va
   última), Mis torneos, Participantes, Resultados, Reportes y
   Configuración: las seis entradas del menú propio andan. Ahí el conmutador es el menú propio del
@@ -236,13 +258,13 @@ dejaban ver interioridades del código.
   estado de su partido de la ronda 3 (14 cargado, 8 pendiente de carga,
   2 programado); de los otros tres torneos va solo la cantidad de
   inscriptos, la misma de Mis torneos (16, 9 de 12, 32). La vista reusa
-  el id `#participantes` de `torneo.html` y sus reglas de CSS.
+  el id `#participantes` de `torneo.php` y sus reglas de CSS.
   Reportes tampoco suma ningún número: inscriptos por torneo en barras
   horizontales (24, 16, 9 de 12 cupos, 32; total 81, el mismo del KPI
   "Participantes totales"), la ronda 3 del Tenis de Mesa en una barra
   apilada (7 cargadas, 4 pendientes de carga, 1 por jugar) y los cuatro
   torneos agrupados con los chips de estado. Los dos gráficos son SVG sin
-  JavaScript, como el de `rendimiento.html`, con cada número escrito. Se
+  JavaScript, como el de la pestaña Rendimiento del perfil, con cada número escrito. Se
   distinguen por forma y no por color, porque olivo y olivo claro se
   confunden: lleno lo hecho, pálido con borde lo pendiente, contorno
   punteado lo que falta. Sus clases son `tramo`, `tramo-pendiente` y
@@ -257,25 +279,26 @@ dejaban ver interioridades del código.
   dicen "A definir en cada torneo"). Todo va dentro de un `fieldset`
   con `disabled`, los booleanos con la `llave-visual` de Módulos del
   sistema, y "Guardar" apagado como "Publicar ronda 3".
-  `crear.html` quedó alineado con esos valores: "Clasifican a playoffs"
+  `crear.php` quedó alineado con esos valores: "Clasifican a playoffs"
   viene en "Ninguno" (valor 0), y los puntos por victoria van de 1 a 10
   tanto en el formulario como en `validar()`.
   **Pendiente de confirmación docente**: `:target` no figura entre los temas
   de clase. Se usó porque la alternativa era JavaScript, que tampoco se dio
   y además el proyecto evita por regla (queda anotado en `style.css`).
 - Cinco páginas más de maquetado estático, con la misma cabecera, el mismo
-  pie y el mismo modo noche desde el primer commit: `calendario.html`
-  (agenda de la semana por día), `llave.html` (eliminación directa de 16,
+  pie y el mismo modo noche desde el primer commit: `calendario.php`
+  (agenda de la semana por día), `llave.php` (eliminación directa de 16,
   apilada en el teléfono y en cuatro columnas con líneas desde 1024 px),
   `rendimiento.html` (tres indicadores de Física y la evolución del tiempo
-  de reacción en un SVG), `panel.html` (panel del organizador) y
+  de reacción en un SVG; hoy es la pestaña Rendimiento del perfil real, y
+  `rendimiento.php` desvía ahí), `panel.html` (panel del organizador) y
   `admin.html` (usuarios, módulos y registro de auditoría). Ninguna toca
   `apps/` ni la base: llevan los datos de ejemplo escritos a mano.
   La navegación compartida apunta ahora a destinos que existen:
-  Calendario → `calendario.html`, Posiciones → `torneo.html#posiciones`,
+  Calendario → `calendario.php`, Posiciones → `torneo.php#posiciones`,
   Organizadores → `panel.html`.
 - **Corregido de paso**: el maquetado desbordaba a lo ancho en
-  `torneo.html`, `crear.html` y `perfil.html` (barra horizontal en el
+  `torneo.php`, `crear.php` y `perfil.php` (barra horizontal en el
   teléfono). La causa estaba en el CSS compartido: dentro de un grid o un
   flex, un hijo no puede achicarse por debajo de su contenido, así que una
   tabla ancha estiraba la página entera. Resuelto con `min-width: 0` en las
@@ -301,7 +324,7 @@ dejaban ver interioridades del código.
       solo con estado `'inscripcion'`, y las transiciones `publicar()`,
       `comenzar()` y `finalizar()` en `Torneo`, que se suman a
       `cancelar()`. `ConfiguracionTorneo::validar()` exige de 1 a 10
-      puntos por victoria (antes de 0 a 10), igual que `crear.html`, y
+      puntos por victoria (antes de 0 a 10), igual que `crear.php`, y
       la base también: `ck_config_victoria CHECK (puntos_victoria
       BETWEEN 1 AND 10)` en `configuracion_torneo`.
       **Migraciones**: las bases ya creadas no se actualizan solas. Cada
@@ -385,15 +408,13 @@ dejaban ver interioridades del código.
       verdad con `actualizarPerfil()` y deja una fila `modificacion` en
       `auditoria`. Es la **primera pantalla que exige sesión iniciada**, así
       que estrena `sesionVigente()`: sin sesión, o con la marca vencida,
-      redirige a `login.html`.
+      redirige a `login.php`.
       Quien edita es siempre el id de la sesión: un `id_usuario` mandado
       por POST se descarta (probado, no toca la otra cuenta). El correo y
       la contraseña no se editan desde ahí.
-      `public/perfil.html` queda solo como maqueta: no la enlaza ninguna
-      página, y en la copia de deploy se reemplaza por un desvío al perfil
-      real, para no publicar datos inventados. Los contadores de torneos,
-      finales y kotinos no están en la vista real: todavía no hay torneos
-      en la base.
+      La maqueta `public/perfil.html` pasó a ser `public/perfil.php`, un
+      desvío al perfil real en las dos instalaciones (ver el ítem de la
+      cabecera y el perfil con pestañas, más abajo).
       **Copia para hosting compartido**: `deploy/hosting-compartido/`, que
       **genera `scripts/armar-deploy.sh`** a partir de `public/` y `apps/`
       (no se edita a mano, o se desincroniza). Queda partida en
@@ -406,6 +427,48 @@ dejaban ver interioridades del código.
       El paso a paso de cPanel está en `docs/deploy-hosting-compartido.md`,
       listo para aplicar a mano. **Pendiente de confirmación docente**: SSL,
       que figura en la tercera entrega.
+
+- [x] Cabecera con sesión, perfil con pestañas y foto/portada —
+      **Cabecera**: todas las páginas con el menú compartido pasaron a
+      `.php` (ver Convenciones). Sin sesión la cabecera es idéntica a la de
+      antes (comparada píxel a píxel: 36 de 36); con sesión, nombre y
+      Cerrar sesión. `salirController.php` (con su puente `salir.php`)
+      cierra solo por POST con `cerrarSesion()`, que ahora borra también la
+      cookie, deja `logout` en `auditoria` y vuelve al inicio. La sesión
+      vencida por inactividad se refleja en la primera página que se abre.
+      `public/.htaccess` pone `DirectoryIndex index.php` y manda las
+      direcciones `.html` viejas a las nuevas con un 301.
+      **Perfil**: pestañas Datos, Mis torneos y Rendimiento con la mecánica
+      `:target` de siempre (Datos, la de por defecto, va última; sus reglas
+      son `#mis-torneos:target ~ #datos` y `#rendimiento:target ~ #datos`).
+      Mis torneos es real (`TorneoRepositorio::buscarPorUsuario`: inscripción
+      directa o por un equipo donde la persona es integrante activa, sin
+      bajas); hoy sale vacía. Estadísticas: Torneos es real (la misma lista,
+      contada); Finales (3) y Kotinos (2) son de muestra, porque la base no
+      registra qué ronda es la final ni quién gana un torneo sin suponer
+      cosas de los módulos, que son de la tercera entrega. Rendimiento es
+      entero de muestra (los valores de la vieja `rendimiento.html`, con el
+      nombre de quien tiene la sesión en el ranking). Todo número de
+      muestra lleva la marca `.muestra` ("De muestra", contorno punteado).
+      `perfil.php` y `rendimiento.php` de `public/` son desvíos del lado
+      del servidor al perfil real (a Datos y a `#rendimiento`), en las dos
+      instalaciones: las maquetas quedan en el historial de git.
+      **Foto y portada**: `ImagenSubida` valida el tipo real con finfo y
+      además con getimagesize (solo JPG, PNG, WEBP), hasta 2 MB y 4000 px
+      de lado, y guarda con un nombre de 32 caracteres al azar. La imagen
+      es siempre de la cuenta de la sesión; la anterior se borra del disco;
+      la carga queda en `auditoria` (`modificacion`, "Carga de foto de
+      perfil" / "Carga de portada"). Sin foto, el círculo lleva las
+      iniciales. Columnas `foto_perfil` y `foto_portada` en `usuario`, con
+      CHECK del nombre exacto (`BINARY ... REGEXP`), en `schema.sql` y en
+      `sql/migraciones/002_imagenes_usuario.sql`, probada sobre una base con
+      el esquema anterior. `public/subidas/.htaccess` no ejecuta nada:
+      probado con Apache real con PHP como módulo (XAMPP) y con PHP-FPM
+      (cPanel); `Require` y `SetHandler none` frenan cada una por su cuenta
+      en los dos. `armar-deploy.sh` nunca copia fotos a la copia del hosting.
+      **Pendiente de confirmación docente**: la subida de archivos
+      (`$_FILES`, `move_uploaded_file`, finfo) y los archivos `.htaccess`
+      no figuran entre los temas de clase.
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.

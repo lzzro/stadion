@@ -17,7 +17,7 @@ máquina nueva.
 
 | Antes | Después |
 |---|---|
-| `http://localhost/stadion/public/index.html` | `http://stadion.local/` |
+| `http://localhost/stadion/public/index.php` | `http://stadion.local/` |
 | Todo el proyecto servido por la web | Solo `public/` y los controladores |
 | `sql/schema.sql` y `apps/config/database.php` descargables | Fuera de alcance |
 
@@ -97,6 +97,9 @@ Abrilo con un editor de texto plano y **agregá al final** este contenido:
         Require all granted
         DirectoryIndex index.html
     </Directory>
+    # Las paginas son .php desde la segunda entrega. public/.htaccess ya
+    # dice "DirectoryIndex index.php", asi que esta linea puede quedar
+    # como esta; si se prefiere, cambiarla a index.php da lo mismo.
 
     # Los controladores viven fuera del DocumentRoot y los formularios les
     # hacen POST, así que tienen que ser alcanzables por HTTP. Se publica
@@ -250,7 +253,8 @@ del paso 3.
 | Dirección | Esperado |
 |---|---|
 | `http://stadion.local/` | La portada de Stadion |
-| `http://stadion.local/login.html` | La página de acceso |
+| `http://stadion.local/login.php` | La página de acceso |
+| `http://stadion.local/login.html` | Redirige a `login.php` (dirección vieja) |
 | `http://localhost/` | El panel de XAMPP, como siempre |
 | `http://stadion.local/apps/config/database.php` | **404** |
 | `http://stadion.local/apps/models/Usuario.php` | **404** |
@@ -258,13 +262,19 @@ del paso 3.
 
 Y la prueba que de verdad importa, porque ejercita el camino completo:
 
-1. Entrá a `http://stadion.local/login.html`.
+1. Entrá a `http://stadion.local/login.php`.
 2. Creá una cuenta con el formulario de abajo.
 3. Tiene que aparecer la página de resultado **con estilos** y el mensaje
    `La cuenta queda abierta a nombre de …`.
 4. Volvé al acceso e iniciá sesión con esa cuenta.
 5. En phpMyAdmin, `sgdm` → `usuario`: la fila tiene que estar con la columna
    `hash_password` empezando en `$2y$`, nunca la contraseña legible.
+6. Con la sesión abierta, arriba de cualquier página tiene que estar tu
+   nombre y **Cerrar sesión**.
+
+Y la de la carpeta de subidas: creá a mano `public/subidas/prueba.php` con
+`<?php echo "CORRE"; ?>` y abrí `http://stadion.local/subidas/prueba.php`.
+Tiene que dar **403**. Después borralo.
 
 Si el paso 3 muestra el mensaje pero sin estilos, falta el `Alias /public`.
 Si el paso 2 da 404, falta el `Alias /apps/controllers`.
@@ -283,6 +293,9 @@ Si el paso 2 da 404, falta el `Alias /apps/controllers`.
 | El navegador descarga el `.php` en vez de ejecutarlo | El módulo de PHP no está cargado | Revisar `LoadModule php_module` en `httpd.conf` |
 | `Falta la configuración local de la base de datos` | No existe `apps/config/database.local.php` | Sección 2.1 |
 | `No hay conexión con la base de datos` | La clave de `sgdm_app` no coincide | Que `apps/config/database.local.php` y el `ALTER USER` tengan la misma |
+| `http://stadion.local/` lista archivos en vez de la portada | Apache no lee `public/.htaccess` | `AllowOverride All` en el `<Directory>` de `public`, paso 3 |
+| `subidas/prueba.php` muestra `CORRE` | Apache no lee `public/subidas/.htaccess` | Lo mismo: `AllowOverride All`, paso 3 |
+| El perfil no abre: `Unknown column 'foto_perfil'` | Falta la migración 002 | `sql/migraciones/002_imagenes_usuario.sql` en phpMyAdmin, con `sgdm` elegida |
 
 ---
 

@@ -1,6 +1,6 @@
 <?php
 # =====================================================================
-# Puente: alta de cuenta
+# Puente: cierre de sesion
 # Proyecto SGDM - Stadion (Agon) - Lucas Martiarena
 # ---------------------------------------------------------------------
 # Generado por scripts/armar-deploy.sh. No editar a mano.
@@ -36,4 +36,4 @@ if (!is_dir($APLICACION)) {
     exit;
 }
 
-require_once $APLICACION . '/controllers/registroController.php';
+require_once $APLICACION . '/controllers/salirController.php';
