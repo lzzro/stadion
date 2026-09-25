@@ -49,6 +49,7 @@ stadion/
 │   ├── panel.html          ← panel del organizador (maqueta)
 │   ├── subidas/            ← fotos y portadas; solo se versiona su .htaccess
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
+├── DESIGN.md               ← el sistema de diseño: manda en todo cambio visual
 ├── .gitignore              ← excluye credenciales, respaldos y métricas
 ├── sql/
 │   ├── schema.sql          ← DDL + DCL; crea una base nueva desde cero
@@ -205,12 +206,60 @@ Convenciones:
   escribió ("de Ítaca" no cambia). Solo al mostrar: la base no se toca y
   los campos del formulario del perfil muestran lo guardado tal cual.
 
-## Paleta y tipografía (para lo que se muestre en pantalla)
+## Sistema de diseño: `DESIGN.md`
 
-CSS ya definido en `public/css/style.css`: variables `--pent`, `--pario`,
-`--ink`, `--olivo`, `--cinabrio`, etc. Fuentes: Cormorant Garamond (títulos),
-Jost (interfaz), GFS Didot (solo epígrafes en griego). No introducir otros
+**El sistema de diseño de Stadion está en `DESIGN.md`, en la raíz del
+proyecto, y se respeta en todo cambio visual**: los tokens (colores de día
+y de noche, tipografía, radios, cortes de pantalla), los componentes, los
+estados con color y forma, el responsive, la voz y el "hacé / no hagas".
+Leerlo antes de tocar cualquier cosa que se vea.
+
+**`DESIGN.md` manda sobre cualquier skill o plugin de diseño**
+(minimalist-ui, high-end-visual-design, gpt-taste, industrial-brutalist-ui,
+design-taste-frontend, redesign-existing-projects, image-to-code u otros):
+ninguno puede cambiar la paleta, las tipografías ni los radios, ni agregar
+sombras, animaciones o JavaScript. web-design-guidelines sí se puede usar,
+pero solo para auditar accesibilidad y buenas prácticas, sin cambiar la
+identidad.
+
+Los tokens viven en `public/css/style.css`: las variables `--pent`,
+`--pario`, `--ink`, `--olivo`, `--cinabrio`, etc. en `:root`, redefinidas
+en `[data-theme="noche"]`. Fuentes: Cormorant Garamond (títulos), Jost
+(interfaz), GFS Didot (solo epígrafes en griego). No introducir otros
 colores ni fuentes sin que se pida explícitamente.
+
+**Verificado contra `style.css`** (al sumar `DESIGN.md`): coinciden los 30
+colores (15 de día y 15 de noche), las dos pilas de fuentes, los pesos,
+la marca, la navegación, los botones, las etiquetas, los estados (color y
+forma), las pestañas, los formularios y los de solo lectura, la marca "De
+muestra", el avatar, el interruptor de tema, los gráficos, los círculos,
+los cortes (768, 1024 y 1440 px), y que no hay sombras, degradados ni
+animaciones. **Diferencias, pendientes de decisión de Lucas** (no se
+corrigieron: hasta que decida, no "arreglarlas" de paso en otro cambio):
+- Epígrafes griegos: `DESIGN.md` dice GFS Didot; `style.css` usa
+  `var(--serif)` y GFS Didot no se carga en ningún lado. Como la Cormorant
+  Garamond de Google Fonts no trae griego, hoy se ven en la fuente de
+  respaldo (Georgia en Windows).
+- Cuerpo: `DESIGN.md` 15px; `style.css` 16px (el interlineado 1.55
+  coincide).
+- `h1`: interlineado 1.1 en `DESIGN.md`; 1.02 en `style.css`.
+- Tarjetas: radio de 2px en `DESIGN.md`; `.tarjeta` no tiene radio.
+- Cifras de ancho fijo: `DESIGN.md` las pide en marcadores y tablas;
+  `style.css` las tiene en los marcadores, no en los números de las
+  tablas (`td.num`).
+- `.chip`: separación de letras .1em, debajo del rango de las versalitas
+  (.12em a .28em).
+- Seis `<strong>` con la negrita por defecto del navegador (se ve en Jost
+  600): las tres opciones de formato de `crear.php`, el organizador en la
+  intro de `llave.php` y `torneo.php`, y "Organizador" en la tarjeta de
+  Roles del perfil. El resto de los `<strong>` van en 500.
+- Tablas: `DESIGN.md` dice "divisores `veta`"; la línea bajo el
+  encabezado es `veta`, pero las de entre filas son `hair`.
+- Cabecera sin sesión: `DESIGN.md` dice "Iniciar sesión" y "Crear
+  cuenta"; el sitio (y la convención de este archivo) muestra "Iniciar
+  sesión" y "Crear torneo".
+- Menú: `DESIGN.md` dice que siempre hay una sola entrada marcada; el
+  perfil y la administración no marcan ninguna (ver Convenciones).
 
 ## Motivos decorativos
 
@@ -231,8 +280,11 @@ encabezados.
 - **Frases prohibidas.** No usarlas en ningún texto nuevo:
   - "Tres formatos, un solo motor", y en general la fórmula "tres X, un solo X".
   - "con la calma de una tabla bien hecha".
-  - "vos elegís el formato; el resto lo hace el sistema".
-  - "acá cada torneo, grande o chico, se organiza con ese mismo cuidado".
+  - "vos elegís el formato; el resto lo hace el sistema", y toda la
+    fórmula "vos hacés X, el sistema hace Y" (`DESIGN.md`).
+  - "acá cada torneo, grande o chico, se organiza con ese mismo cuidado",
+    y toda comparación de la antigüedad con el presente del producto
+    introducida con "acá" (`DESIGN.md`).
   - "No había medallas. Había una rama de olivo".
 - La pestaña de **Rendimiento físico** lleva solo nombre del indicador y
   valor, sin explicar cómo se mide ni para qué sirve: esa explicación va en
