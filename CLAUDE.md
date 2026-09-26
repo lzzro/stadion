@@ -145,12 +145,12 @@ Convenciones:
   `<span class="enlace-apagado" aria-disabled="true">` (se ve, en gris y
   con el cursor de prohibido, pero no es un control). Un control de
   formulario que no hace nada en el servidor ("Recordarme", "Guardar
-  borrador", los filtros) no se pone. **Una excepción, a decidir por
+  borrador", los filtros) no se pone. **Una excepción, decidida por
   Lucas**: "Continuar" de `crear.php` sigue, porque es el paso de la
   maqueta del asistente y muestra la validación del navegador (campos
   obligatorios, largos, mínimos y máximos), pero su `action="#"` no guarda
-  nada: la página se recarga vacía. Su controlador llega con el motor de
-  torneos.
+  nada: la página se recarga vacía. Se resuelve en la fase 2 del motor de
+  torneos, con su controlador.
 - **Cada enlace o botón se entiende solo, fuera de contexto**: los que se
   repiten ("Ver torneo", "Cargar", "Administrar") llevan el nombre de lo
   suyo en un `<span class="visualmente-oculto">`, y los de la
@@ -285,10 +285,9 @@ en `[data-theme="noche"]`. Fuentes: Cormorant Garamond (títulos), Jost
 introducir otros colores ni fuentes sin que se pida explícitamente.
 **Toda combinación nueva de colores cumple el contraste mínimo de WCAG 2.2
 AA** (4,5:1 texto; 3:1 bordes de campos y formas), igual que dice
-`DESIGN.md`. **Pendiente de decisión de Lucas**: de noche, el borde de los
-campos (`--campo`, igual que `--veta`, #3A362E) da 1,47:1 sobre `--pario`,
-debajo de 3:1. No se cambió porque el pedido dejaba el modo noche sin
-tocar; con `--ink3` de noche (#A79F8C) daría 6,74:1.
+`DESIGN.md`. El borde de los campos (`--campo`) es `--ink3` en los dos
+modos: de noche, #A79F8C da 6,74:1 sobre `--pario` (con `--veta` daba
+1,47:1).
 
 **Verificado contra `style.css`**: coinciden los colores de día y de
 noche, las pilas de fuentes, los pesos, los componentes y los cortes. Las
@@ -777,7 +776,8 @@ dejaban ver interioridades del código.
       (4,53:1), hover del primario con su propio tono `--olivoH` #697851
       (4,53:1; `--olivo2` sigue igual en el resto), y el borde de los
       campos con su token `--campo` (= `--ink3` de día). La noche no se
-      tocó (ver el pendiente en "Sistema de diseño"). El barrido de
+      tocó en esa ronda; después Lucas decidió pasar también el borde de
+      los campos de noche a `--ink3` (6,74:1; con `--veta` daba 1,47:1). El barrido de
       contraste encontró tres cosas más, corregidas con colores de la
       paleta: la etiqueta sobre olivo pálido (4,32:1, ahora `--ink2` con
       la clase `.tarjeta-olivo`), el texto de ejemplo de los campos (el
@@ -833,7 +833,31 @@ dejaban ver interioridades del código.
       ejemplos de los campos, texto de los SVG, formas de estado, bordes de
       campos y botones, marca activa): de día, nada por debajo del mínimo
       salvo los campos deshabilitados de Configuración (exentos); de
-      noche, solo el borde de los campos (1,47:1, el pendiente).
+      noche, solo el borde de los campos (1,47:1), resuelto después (ver
+      el ítem siguiente).
+
+- [x] Decisiones de Lucas sobre lo pendiente de la accesibilidad —
+      **Borde de los campos de noche** a `--ink3` (#A79F8C, 6,74:1), igual
+      que de día. **Copa Interliceal** del inicio alineada con `llave.php`:
+      "Copa Interliceal de Ajedrez", 16 participantes · Cuartos, y la barra
+      al 50 % por la misma regla que las otras tarjetas (ronda actual sobre
+      rondas totales: cuartos es la 2 de 4). **Voz**: "¿Ya tenés cuenta?"
+      pasa a "¿Cuenta ya abierta?"; "si inscribís 16 participantes", a
+      "con 16 participantes inscriptos"; la tarjeta de `torneos.php` ("Abrí
+      tu propio estadio… lo que cargás… se ocupa Stadion", voseo y la
+      fórmula prohibida) se reescribió entera: "Un estadio propio" /
+      "Participantes, formato y fecha. Con eso, el calendario y la llave
+      quedan trazados."; el texto de ejemplo del correo es
+      "nombre@correo.com"; y Rendimiento ya no dice "El número baja cuando
+      la reacción mejora.". Revisado todo el texto visible del sitio (las
+      26 vistas renderizadas, con sus nombres accesibles, más los 114
+      mensajes de controladores y modelos): no queda voseo ni "tu/tus".
+      "Continuar" de `crear.php` queda como excepción documentada, hasta la
+      fase 2 del motor.
+      **Probado** en las dos disposiciones: la batería de siempre igual,
+      axe-core sin violaciones, y el barrido de contraste sin nada por
+      debajo del mínimo en ninguno de los dos modos (salvo los campos
+      deshabilitados de Configuración, exentos).
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.

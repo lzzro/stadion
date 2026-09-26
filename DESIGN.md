@@ -39,7 +39,7 @@ colors:
     enjuego: "#AD8B50"
     vencedor: "#A7B593"
     cerrado: "#A79F8C"
-    campo: "#3A362E"      # igual que veta: 1,47:1 sobre pario, debajo de 3:1 (pendiente de decisión)
+    campo: "#A79F8C"      # borde de los campos (igual que ink3, como de día: 6,74:1 sobre pario)
 
 typography:
   serif: "'Cormorant Garamond', Georgia, serif"   # títulos, números grandes, marca
@@ -86,7 +86,7 @@ La marca de la empresa es **Agón** (símbolo "Lente": vesica piscis con ranura,
 
 Todos los colores se usan a través de variables CSS (`var(--olivo)`, etc.), declaradas una vez en `:root` y redefinidas en `[data-theme="noche"]`. **Ningún color se escribe a mano en una página ni dentro de un SVG**, salvo las excepciones documentadas (la tarjeta de contraste, el disco del interruptor de tema y el `<meta name="theme-color">` del `<head>`, que arranca con `pent` de día y que `tema.js` cambia al de noche leyendo la variable).
 
-**Contraste mínimo.** Toda combinación nueva de colores cumple WCAG 2.2 AA: **4,5:1 para el texto** (3:1 si es grande: 24px, o 18,66px en negrita) y **3:1 para los bordes de los campos y las formas** que hacen falta para entender la pantalla (el punto o el cuadrado de un estado, la marca de la pestaña activa). Por eso `ink3`, `cerrado`, `enjuego` y el borde de los campos bajaron de tono de día, y el hover del botón primario tiene su propio color (`olivoH`). Queda una excepción, pendiente de decisión: de noche, el borde de los campos (`campo`, igual que `veta`) da 1,47:1.
+**Contraste mínimo.** Toda combinación nueva de colores cumple WCAG 2.2 AA: **4,5:1 para el texto** (3:1 si es grande: 24px, o 18,66px en negrita) y **3:1 para los bordes de los campos y las formas** que hacen falta para entender la pantalla (el punto o el cuadrado de un estado, la marca de la pestaña activa). Por eso `ink3`, `cerrado`, `enjuego` y el borde de los campos bajaron de tono de día, y el hover del botón primario tiene su propio color (`olivoH`). De noche el borde de los campos también es `ink3` (con `veta` daba 1,47:1).
 
 El modo noche se construyó con un método de dos familias:
 
