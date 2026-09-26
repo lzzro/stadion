@@ -1054,6 +1054,22 @@ dejaban ver interioridades del código.
       **borran solo lo que ellas mismas crean** y comparan la base y la
       carpeta de las subidas antes y después (`permisos.js`, `sesion.js`,
       `subidas.js`, `recorrido.js`; ver `tests/README.md`).
+      **Probado** en las dos disposiciones (mod_php contra MariaDB 10.11 y
+      PHP-FPM sobre la copia de `armar-deploy.sh` contra la 11.4, las dos
+      bases cargadas con la 005 sobre la de antes), todo bien en las dos:
+      fixture 5/5, modelos 31/31, datos de muestra 14/14, permisos 80/80,
+      sesión y perfil 76/76, subidas 36/36, recorrido 7/7 (174 combinaciones de
+      vista, ancho y modo, 480 marcadores, 366 enlaces), ligas 104/104, páginas públicas
+      171/171 y accesibilidad 530/530 (axe-core sin violaciones, sin
+      desbordes); el barrido de contraste (3614 mediciones, nada por
+      debajo del mínimo de día ni de noche) y el de teclado (2720
+      comprobaciones); y la migración 005 en los dos servidores, 128/128.
+      Antes, una revisión adversarial con cuatro enfoques (código PHP,
+      seguridad de las baterías, migración y reglas del proyecto)
+      encontró 12 hallazgos (dos repetidos entre enfoques), todos
+      corregidos: los campos mandados
+      como arreglo, la hora de los pedidos viejos, el orden alfabético,
+      tres resguardos de las baterías y la documentación.
       **Regla pendiente (fase 3, carga de resultados)**: una liga que
       se juega al mejor de N (mapas, sets, partidas) con N impar no
       admite empate. La carga de resultados tiene que rechazar un
