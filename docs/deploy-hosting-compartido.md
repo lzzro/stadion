@@ -235,7 +235,7 @@ que el esquema: con `lucasmar_sgdm` elegida, pestaña **SQL** o **Import**.
 | `002_imagenes_usuario.sql` | `foto_perfil` y `foto_portada` en `usuario`, con sus dos CHECK. **Sin esta, el perfil no abre** |
 | `003_pedidos_de_rol.sql` | La tabla `pedido_rol` y las tres acciones nuevas de `auditoria` (`pedido_rol`, `aprobacion`, `rechazo`). **Sin esta, pedir el rol de organizador no anda** |
 | `004_utf8mb4.sql` | La base y las 17 tablas de `latin1` a `utf8mb4`, sin perder datos. **Sin esta, un emoji o una letra fuera del alfabeto de Europa occidental hacen fallar el perfil** |
-| `005_ligas.sql` | La fase 2: la marca de las cuentas de muestra, la fecha de inicio opcional, el criterio de desempate, la tabla `pedido_inscripcion`, cuatro acciones de `auditoria` y el catálogo con tildes; y los **datos de muestra** (tres ligas con su historial). **Sin esta, crear una liga, el panel y las páginas de torneos no andan** |
+| `005_ligas.sql` | La fase 2: la marca de las cuentas de muestra, la fecha de inicio opcional, una sola liga vigente con cada nombre (la columna calculada `nombre_vigente` y su UNIQUE `uq_torneo_vigente`), el criterio de desempate, la tabla `pedido_inscripcion`, cuatro acciones de `auditoria` y el catálogo con tildes; y los **datos de muestra** (tres ligas con su historial). **Sin esta, crear una liga, el panel y las páginas de torneos no andan** |
 
 **El orden importa.** En una base que viene de antes, sin administrador y
 con las tablas en `latin1` (el caso del hosting):
@@ -324,8 +324,9 @@ Correrla dos veces no hace daño: la segunda vez da el mismo resultado.
    |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
    | 3 | 0 | 3 | en_curso / inscripcion / en_curso | 31 | 111 | 57 | 1 | 22 | Titanes CS · 18 pts · +9 | Liceo 3 · 9 pts · -3 | 18 | 33 | 29 | 16 |
 
-   Los últimos tres son los de una base nueva con el esquema actual. Si
-   algo no coincide, no sigas y avisá.
+   Los últimos cuatro (tablas, CHECK, claves foráneas e índices únicos)
+   son los de una base nueva con el esquema actual. Si algo no coincide,
+   no sigas y avisá.
 4. Entrá a `https://TU-DOMINIO/torneos.php`: las tres ligas, cada una con
    la marca "De muestra"; y a `torneo.php#posiciones`: la tabla de la Liga
    Valorant, con Titanes CS primero (18 puntos).
@@ -339,13 +340,25 @@ Si frena (en todos los casos, sin cambiar nada):
   resultado, correr sola la última consulta del archivo (la que empieza
   con `SELECT` después de "6. El resultado").
 - **"CONSTRAINT `ck_005_nombres_libres` failed"**: ya hay un equipo o una
-  cuenta con alguno de los nombres o correos de muestra. La consulta **2c**
-  del archivo, corrida sola (junto con el `CREATE TEMPORARY TABLE` y el
-  `INSERT` de `carga_005_equipo` de arriba), dice cuáles.
+  cuenta con alguno de los nombres o correos de muestra, o dos torneos
+  vigentes (en borrador, inscripción o en curso) con el mismo nombre, que
+  el UNIQUE nuevo no admite. La consulta **2c** del archivo, corrida sola
+  (junto con el `CREATE TEMPORARY TABLE` y el `INSERT` de
+  `carga_005_equipo` de arriba), dice cuáles: `equipo`, `cuenta` o
+  `torneo vigente repetido`. Cambiá el nombre que choca (o el del torneo
+  repetido) y corré la 005 entera de nuevo.
 
 Los datos de muestra van en una transacción: si algo falla a mitad de la
 carga, no queda nada a medias. Las tres cuentas organizadoras de muestra
 (`@ejemplo.invalid`) no inician sesión con ninguna clave.
+
+**La hora.** Desde esta versión la aplicación guarda la hora de Montevideo
+(UTC-3), y la 005 y `primer_administrador.sql` también (empiezan con
+`SET time_zone = '-03:00'`). Lo guardado antes quedó con la hora del
+servidor, que en el hosting es UTC, y no se convierte: en la auditoría,
+las filas de antes figuran tres horas adelantadas. Un pedido hecho antes
+se puede resolver igual (la fecha de resolución nunca queda antes de la
+del pedido).
 
 ### Comprobar la codificación
 
@@ -695,12 +708,14 @@ Las baterías están en `tests/` (ver `tests/README.md`):
 
 - **La migración 005**: en los dos servidores, sobre una base con el
   esquema anterior, sobre una base nueva, dos veces seguidas, sin la 003,
-  sin la 004, con un nombre de equipo ya ocupado y con una falla a mitad
-  de la carga (no queda nada a medias). La base migrada queda idéntica a
-  una nueva.
+  sin la 004, con un nombre de equipo ya ocupado, con dos ligas vigentes
+  con el mismo nombre y con una falla a mitad de la carga (no queda nada a
+  medias). La base migrada queda idéntica a una nueva.
 - **Los datos de muestra**: la tabla recalculada desde los partidos es la
-  guardada, y la de las páginas de siempre; el fixture de muestra es el que
-  arma la aplicación con esos equipos.
+  guardada; la de la Liga Valorant conserva el orden y las diferencias de
+  mapas de la maqueta, pero no sus puntos (al mejor de 3 mapas no hay
+  empates); el fixture de muestra es el que arma la aplicación con esos
+  equipos.
 - **De punta a punta**, con cuentas nuevas en cada corrida: crear una liga
   (con los errores al lado de cada campo), anotar equipos, armar un equipo
   y pedir lugar, aceptar y rechazar, el cupo, cerrar la inscripción, el
@@ -709,6 +724,14 @@ Las baterías están en `tests/` (ver `tests/README.md`):
   cuenta, sin token.
 - **Las páginas públicas** leyendo de la base, y **axe-core** en día y
   noche, en 390 y 1024 px.
+- **Lo de la primera entrega, de nuevo**: los roles y el token de todos
+  los formularios (`permisos.js`), la cabecera con sesión, el perfil y la
+  tarjeta de los roles (`sesion.js`), la foto y la portada con sus
+  defensas (`subidas.js`) y un recorrido de todas las vistas y enlaces
+  (`recorrido.js`). Estas cuatro borran solo lo que crean y comprueban que
+  la base y la carpeta de las subidas quedan como estaban: la batería vieja
+  de la fase 1 "limpiaba" borrando pedidos y roles de todas las cuentas, y
+  ya no existe (ver `tests/README.md`).
 
 ### La cabecera, el perfil y las subidas (segunda entrega)
 

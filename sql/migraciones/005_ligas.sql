@@ -128,8 +128,9 @@
 --     de carga, que se borran solas al cerrar la conexion;
 --   - la transaccion (START TRANSACTION ... COMMIT) de los datos: si algo
 --     falla en el medio, no queda nada a medias;
---   - la columna calculada de pedido_inscripcion (igual que en
---     pedido_rol);
+--   - las columnas calculadas de pedido_inscripcion (igual que en
+--     pedido_rol) y de torneo (nombre_vigente);
+--   - SET time_zone, la hora de Montevideo para esta conexion;
 --   - las consultas a information_schema que verifican.
 --
 -- Necesita MariaDB 10.2 o superior. Probada en MariaDB 10.11 (la de la
@@ -140,6 +141,12 @@
 -- El archivo esta en UTF-8 (lleva tildes y el punto medio de
 -- "Valorant · Otoño"), y asi lo tiene que leer el servidor.
 SET NAMES utf8mb4;
+
+-- La hora de Montevideo (UTC-3), la misma que usa la aplicacion (ver
+-- apps/config/database.php): la fila de la auditoria que deja la carga
+-- lleva la hora de aca y no la del servidor, que en el hosting es UTC.
+-- Vale solo para esta conexion. PENDIENTE DE CONFIRMACION DOCENTE.
+SET time_zone = '-03:00';
 
 
 -- ---------------------------------------------------------------------

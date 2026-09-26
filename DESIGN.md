@@ -149,7 +149,7 @@ Los números de marcadores y de todas las tablas usan cifras de ancho fijo (`tab
 
 **Chips.** Versalitas chicas con borde `hair`; el activo se invierte (fondo `ink`, texto `pario`).
 
-**Marca "De muestra".** Todo dato de ejemplo mostrado junto a datos reales lleva al lado la marca "De muestra": texto de 10px en versalitas con contorno punteado. Nunca se muestra un número inventado sin esta marca en una pantalla que dice mostrar datos reales.
+**Marca "De muestra".** Todo dato de ejemplo mostrado junto a datos reales lleva al lado la marca "De muestra": texto de 10px en versalitas con contorno punteado. Nunca se muestra un número inventado sin esta marca en una pantalla que dice mostrar datos reales. Un total que suma datos de ejemplo y datos reales (los números del inicio) lleva la misma marca con el texto "Incluye muestra"; si todo lo que suma es de ejemplo, "De muestra"; si nada, ninguna.
 
 **Avatar.** Círculo con la foto recortada o, sin foto, las iniciales en Cormorant sobre `olivoT` con borde `olivo2`. El de la cabecera y el del perfil salen de la misma función.
 

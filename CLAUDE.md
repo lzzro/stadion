@@ -235,7 +235,10 @@ Convenciones:
   **Nada escrito a mano**: los números, las tarjetas, las tablas y las
   fechas salen de la base. Lo que organiza una cuenta de muestra
   (`usuario.de_muestra = 1`, la migración 005) lleva al lado la marca
-  "De muestra" (`marcaMuestra()`, en `apps/ligas.php`).
+  "De muestra" (`marcaMuestra()`, en `apps/ligas.php`). Un total que suma
+  ligas de muestra y reales (los números del inicio) lleva "Incluye
+  muestra" (`marcaTotal()`); si todo es de muestra, "De muestra"
+  (`DESIGN.md`, Marca "De muestra").
 - **Todo formulario que cambia algo lleva el token de `apps/config/csrf.php`**:
   `campoCsrf()` dentro del `<form>`, y el controlador llama a
   `csrfValido()` antes de tocar nada. Si falla, `rechazarCsrf()` responde
@@ -430,7 +433,10 @@ dejaban ver interioridades del código.
   apunta el menú compartido, sigue abriendo Posiciones (probado desde las
   cinco páginas que tienen ese menú).
   El puntaje que muestra Reglas (3/1/0) es el mismo que traen por defecto
-  `ConfiguracionTorneo` y la tabla `configuracion_torneo`, y la ronda en
+  `ConfiguracionTorneo` y la tabla `configuracion_torneo` (desde la fase
+  2, la Liga Valorant de muestra no admite empates y Reglas dice "3
+  puntos la victoria y 0 la derrota. Ningún partido termina
+  empatado."), y la ronda en
   curso que muestran Resumen y Calendario es la 8, que es la que se deduce
   de los `PJ = 7` de la tabla de posiciones y de `calendario.php`.
   (Lo que sigue de `panel.html` es historia: desde la fase 2 el panel es
@@ -966,14 +972,16 @@ dejaban ver interioridades del código.
       0. Los equipos están inscriptos en el orden del
       método del círculo: la aplicación arma exactamente ese fixture. La
       005 frena sin cambiar nada si falta la 003 o la 004, si ya se
-      aplicó (correrla dos veces no duplica nada) o si un nombre de
-      muestra ya está ocupado. `schema.sql` no trae los datos: una base
+      aplicó (correrla dos veces no duplica nada), si un nombre de
+      muestra ya está ocupado o si hay dos ligas vigentes con el mismo
+      nombre (el UNIQUE nuevo fallaría a mitad de camino). `schema.sql` no trae los datos: una base
       nueva es `schema.sql` y después la 005.
       **Crear liga** (`crearController.php`, vista `apps/crear.php`;
       `public/crear.php` desvía): nombre, juego o deporte, cupo 4 a 32,
       una vuelta o ida y vuelta, puntos 1-10 / 0-10 / 0-10 (el empate no
       pasa la victoria ni la derrota el empate), criterio de desempate y
-      fecha de inicio opcional. Validación en el servidor campo por campo
+      fecha de inicio opcional, de hoy en adelante (hoy en Montevideo; el
+      campo lleva `min`). Validación en el servidor campo por campo
       (ver Convenciones), CSRF, la liga nace con la inscripción abierta y
       queda en la auditoría; después, al panel.
       **Panel** (`panelController.php`, vista `apps/panel.php`;
@@ -1005,12 +1013,47 @@ dejaban ver interioridades del código.
       semana sale de la fecha), `llave.php` (dice que ninguna competencia
       usa la llave: solo hay ligas) y también `index.php` (sus números,
       tarjetas y el recuadro en vivo). Marca "De muestra" en todo lo de
-      la 005. La Copa Interliceal, el Tenis de Mesa, el LoL y el Magic de
+      la 005 (y "Incluye muestra" en los totales del inicio que la
+      suman). Una liga de muestra no recibe pedidos de lugar ("Pedir
+      lugar" apagado, con el porqué): la organiza una cuenta que no inicia
+      sesión. "Próximo enfrentamiento" es el primero por jugar de ahora en
+      adelante (un programado con la hora pasada no cuenta), y el
+      costado de `calendario.php` dice "Esta semana" solo en la semana de
+      hoy. La Copa Interliceal, el Tenis de Mesa, el LoL y el Magic de
       la maqueta ya no aparecen: no están en la base.
+      **Orden de la tabla**: por puntos, después el criterio de
+      desempate, y si todo coincide, alfabético como lo ordena la base
+      (`utf8mb4_unicode_ci`): sin mirar mayúsculas ni tildes, y las
+      letras que ese cotejo trata aparte (æ, ł, ø, þ…) en su lugar
+      (`ConfiguracionTorneo::claveAlfabetica()`, probado contra MariaDB).
+      **La hora**: las páginas usan la de Montevideo
+      (`date_default_timezone_set` en `apps/fechas.php`) y la conexión a
+      la base también (`SET time_zone = '-03:00'` en `database.php`,
+      como diferencia y no por nombre, porque un hosting no siempre tiene
+      cargadas las tablas de zonas). La 005 y `primer_administrador.sql`,
+      que se corren a mano, ponen la misma hora al empezar. Lo guardado
+      antes quedó con la hora del servidor (UTC en el hosting) y no se
+      convierte; para que un pedido viejo se pueda resolver igual, la
+      resolución guarda `GREATEST(NOW(), fecha_pedido)`.
+      **Formularios**: todo campo de texto se lee solo si llega como
+      texto (`is_string`): un campo mandado como arreglo (`nombre[]=x`)
+      queda vacío en lugar de cortar la página con un error 500 (perfil,
+      inicio de sesión, registro, administración, crear, panel y pedir
+      lugar).
       **CSS versionado** (`recurso()`) y **baterías en `tests/`** con su
       README (ver Convenciones y `tests/README.md`), sin contraseñas ni
       datos reales; `armar-deploy.sh` corta si una carpeta `tests` se
       cuela en la copia.
+      **La batería vieja de la fase 1 ya no existe.** Corría con dos
+      cuentas fijas y, para empezar de cero, borraba todos los pedidos de
+      rol y todos los roles que no fueran `jugador`, de cualquier cuenta:
+      en las bases de prueba se llevó los roles de las organizadoras de
+      muestra (repuestos). Corrió solo contra las bases de prueba de la
+      máquina de prueba (127.0.0.1), nunca contra el hosting ni contra la
+      base de Lucas. Lo que probaba está ahora en cuatro baterías que
+      **borran solo lo que ellas mismas crean** y comparan la base y la
+      carpeta de las subidas antes y después (`permisos.js`, `sesion.js`,
+      `subidas.js`, `recorrido.js`; ver `tests/README.md`).
       **Regla pendiente (fase 3, carga de resultados)**: una liga que
       se juega al mejor de N (mapas, sets, partidas) con N impar no
       admite empate. La carga de resultados tiene que rechazar un
@@ -1024,7 +1067,8 @@ dejaban ver interioridades del código.
       empate, pero no un empate donde no se admite).
       **Pendiente de confirmación docente**: las transacciones desde PHP
       y el bloqueo con `FOR UPDATE`; el método del círculo; la columna
-      calculada de `pedido_inscripcion`; `ADD COLUMN IF NOT EXISTS`,
+      calculada de `pedido_inscripcion` y la de `torneo`
+      (`nombre_vigente`); `SET time_zone`; `ADD COLUMN IF NOT EXISTS`,
       `ADD CONSTRAINT IF NOT EXISTS`, `DROP CONSTRAINT IF EXISTS` y
       `CREATE TABLE IF NOT EXISTS` (de MariaDB); las tablas temporales de
       la migración y sus consultas a `information_schema`; `md5_file()`
