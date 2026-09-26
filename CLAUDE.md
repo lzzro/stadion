@@ -42,19 +42,21 @@ Lo dado en clase, por materia:
 stadion/
 ├── public/
 │   ├── .htaccess           ← DirectoryIndex index.php y desvío de las .html viejas
-│   ├── index.php  torneos.php  torneo.php  calendario.php  llave.php  crear.php
+│   ├── index.php  torneos.php  torneo.php  calendario.php  llave.php
+│   │                       ← páginas que leen de la base (fase 2): nada escrito a mano
 │   ├── login.php  registro.php        ← páginas: la cabecera depende de la sesión
 │   ├── perfil.php  rendimiento.php    ← desvíos al perfil real
 │   ├── admin.php           ← desvío a la administración real
-│   ├── panel.html          ← panel del organizador (maqueta)
+│   ├── crear.php  panel.php  ← desvíos a crear liga y al panel real del organizador
 │   ├── subidas/            ← fotos y portadas; solo se versiona su .htaccess
 │   └── css/style.css       ← una sola hoja de estilos, variables en :root
 ├── DESIGN.md               ← el sistema de diseño: manda en todo cambio visual
 ├── .gitignore              ← excluye credenciales, respaldos y métricas
 ├── sql/
-│   ├── schema.sql          ← DDL + DCL; crea una base nueva desde cero
-│   ├── migraciones/        ← cambios para bases ya creadas, a mano y en orden
+│   ├── schema.sql          ← DDL + DCL; crea una base nueva desde cero (sin datos de muestra)
+│   ├── migraciones/        ← cambios para bases ya creadas, a mano y en orden (001 a 005)
 │   └── primer_administrador.sql  ← da el rol administrador a una cuenta, a mano
+├── tests/                  ← baterías de prueba (README); nunca van al hosting
 ├── docs/
 │   ├── configuracion-apache.md  ← despliegue: virtual host y puesta en marcha
 │   ├── respaldos-cron.md   ← cron, respaldos y la decisión sobre Grafana
@@ -67,19 +69,28 @@ stadion/
 ├── deploy/hosting-compartido/  ← GENERADO, no editar a mano (sin fotos en subidas/)
 │   ├── public_html/        ← lo único que el hosting publica
 │   ├── stadion_app/        ← la aplicación, fuera del alcance web
-│   └── sql/schema-hosting.sql  ← el esquema para phpMyAdmin del hosting; no se sube
+│   └── sql/                ← no se sube: se corre en phpMyAdmin del hosting
+│       ├── schema-hosting.sql   ← el esquema, sin los bloques de servidor propio
+│       └── migraciones/    ← cada migración, sin los bloques de servidor propio
 └── apps/
     ├── index.php           ← vista de resultado, se re-incluye tras procesar
     ├── perfil.php          ← vista de perfil con pestañas: Datos, Mis torneos, Rendimiento
     ├── admin.php           ← vista de administración (solo con el rol administrador)
+    ├── crear.php           ← vista de "Nueva liga" (solo organizadores)
+    ├── panel.php           ← vista del panel del organizador (solo organizadores)
     ├── cabecera.php        ← circuloPersona() y accionesCabecera(): Iniciar sesión, o el círculo
+    ├── pie.php             ← piePagina(): el pie, el cierre de .pagina y el interruptor
+    ├── ligas.php           ← cómo se muestra una liga: chip, avance, barra, renglón de partido
+    ├── fechas.php          ← fechas en castellano; el día de la semana sale de la fecha
     ├── config/
     │   ├── database.php    ← conexión mysqli, sin credenciales
     │   ├── database.local.php.ejemplo  ← plantilla; la copia real no se versiona
     │   ├── sesion.php      ← vigencia de la sesión (30 min de inactividad)
     │   ├── csrf.php        ← token por sesión de todos los formularios
-    │   ├── pagina.php      ← arranque de cada página .php: sesión y rutas
-    │   └── rutas_paginas.php  ← direcciones del perfil y la administración (el hosting tiene otras)
+    │   ├── pagina.php      ← arranque de cada página .php: sesión, rutas y $carpeta_app
+    │   ├── recursos.php    ← recurso(): el CSS y el JS con ?v= (versión por contenido)
+    │   └── rutas_paginas.php  ← direcciones del perfil, la administración, crear, panel y
+    │                          pedir lugar (el hosting tiene otras)
     ├── controllers/
     │   └── xxxController.php
     └── models/
@@ -102,18 +113,21 @@ Convenciones:
   (`aria-current="page"` si el enlace lleva a la página abierta, `"true"`
   si marca la sección de la que depende). El menú marca a lo sumo una
   entrada. Cada página marca la entrada de la que es destino: `index.php` →
-  Inicio, `torneos.php` → Torneos, `calendario.php` → Calendario,
-  `crear.php` (con `"true"`) y `panel.html` → Organizadores. El perfil real
-  (`apps/perfil.php`) no cuelga de ninguna entrada y no marca ninguna, y
-  `llave.php`, que es el detalle de un torneo, marca Torneos (`"true"`).
+  Inicio, `torneos.php` → Torneos, `calendario.php` → Calendario, el
+  panel real (`apps/panel.php`, destino de `panel.php`) → Organizadores
+  (con `"page"`) y "Nueva liga" (`apps/crear.php`) → Organizadores (con
+  `"true"`). El perfil real (`apps/perfil.php`) no cuelga de ninguna
+  entrada y no marca ninguna, y `llave.php`, que es el detalle de un
+  torneo, marca Torneos (`"true"`).
   Las pestañas activas (`.pestanas a.activo`) llevan `aria-current="page"`.
-  `panel.html` y la administración (`apps/admin.php`) reemplazan el menú
-  compartido por el suyo. El de la administración son enlaces a sus
-  secciones (Pedidos, Cuentas, Módulos, Auditoría) en una sola página que
-  se recorre, sin vistas que cambien: no marca ninguno.
+  La administración (`apps/admin.php`) reemplaza el menú compartido por el
+  suyo: enlaces a sus secciones (Pedidos, Cuentas, Módulos, Auditoría) en
+  una sola página que se recorre, sin vistas que cambien: no marca
+  ninguno. El panel del organizador usa el menú compartido: es una sola
+  página que se recorre, con una tarjeta por liga (`id="liga-N"`).
   Al agregar una página, marcar su entrada acá también.
-  **En las páginas con pestañas** (`torneo.php`, `panel.html` y el
-  perfil) la misma dirección muestra una vista u otra según el ancla, y
+  **En las páginas con pestañas** (`torneo.php` y el perfil) la misma
+  dirección muestra una vista u otra según el ancla, y
   el HTML no puede cambiar solo. Lo que tiene que acompañar a la vista
   abierta va **dos veces en el HTML**, cada copia con lo suyo escrito a
   mano, y el CSS deja ver una sola: `data-vista="x"` se ve solo con la
@@ -124,11 +138,11 @@ Convenciones:
   En `torneo.php`, sin ancla es el detalle de un torneo y marca Torneos,
   igual que `llave.php`; con `#posiciones` marca Posiciones, que es a
   donde apunta ese enlace del menú: Torneos y Posiciones van dos veces.
-  En `panel.html` el menú es el suyo propio y hace de barra de pestañas:
-  sin ancla marca Resumen, y con `#mis-torneos`, `#participantes`,
-  `#resultados`, `#reportes` o `#configuracion` marca la entrada del mismo
-  nombre: las seis entradas van dos veces. Al agregar una vista, sumar su
-  par de reglas en el bloque "Lo que acompaña a la vista abierta" de
+  Eso vale solo en la **liga destacada** (la de `torneo.php` sin número,
+  a la que lleva "Posiciones" del menú): en `torneo.php?id=N` de otra
+  liga, Posiciones del menú lleva a otra página, así que el menú marca
+  siempre Torneos, una sola vez. Al agregar una vista, sumar su par de
+  reglas en el bloque "Lo que acompaña a la vista abierta" de
   `style.css`.
   **Pendiente de confirmación docente**: esas reglas usan `:has()`, que
   no figura entre los temas de clase. El combinador `~` de las pestañas no
@@ -145,12 +159,12 @@ Convenciones:
   `<span class="enlace-apagado" aria-disabled="true">` (se ve, en gris y
   con el cursor de prohibido, pero no es un control). Un control de
   formulario que no hace nada en el servidor ("Recordarme", "Guardar
-  borrador", los filtros) no se pone. **Una excepción, decidida por
-  Lucas**: "Continuar" de `crear.php` sigue, porque es el paso de la
-  maqueta del asistente y muestra la validación del navegador (campos
-  obligatorios, largos, mínimos y máximos), pero su `action="#"` no guarda
-  nada: la página se recarga vacía. Se resuelve en la fase 2 del motor de
-  torneos, con su controlador.
+  borrador", los filtros) no se pone. La excepción de "Continuar" de la
+  maqueta de `crear.php` se resolvió en la fase 2: el formulario de
+  "Nueva liga" guarda de verdad. Una acción que depende del estado de la
+  liga ("Cerrar la inscripción" con menos de 4 equipos, "Anotar equipo"
+  con el cupo completo, "Rehacer el fixture" con resultados) va apagada
+  con la nota que dice por qué.
 - **Cada enlace o botón se entiende solo, fuera de contexto**: los que se
   repiten ("Ver torneo", "Cargar", "Administrar") llevan el nombre de lo
   suyo en un `<span class="visualmente-oculto">`, y los de la
@@ -172,10 +186,17 @@ Convenciones:
   `--ink` (la casilla, con contorno punteado), nunca cinabrio.
   **Pendiente de confirmación docente**: `:user-invalid` no figura entre
   los temas de clase (queda anotado en `style.css`).
+  **Errores al lado de cada campo** (desde la fase 2: crear liga, anotar
+  equipo, equipo nuevo): el controlador valida campo por campo y devuelve
+  un arreglo campo => mensaje; el campo lleva `aria-invalid="true"` (el
+  CSS lo dibuja igual que `:user-invalid`) y nombra en `aria-describedby`
+  su ayuda y su error, que va debajo en `<p class="error-campo" id="error-…">`
+  (en `--ink`, con la raya de los avisos). Arriba, la lista de errores con
+  un enlace a cada campo, y el "Aviso ·" del título.
 - **Una tabla que se desplaza** (`.tabla-scroll`) lleva `tabindex="0"`,
   `role="region"` y su nombre en `aria-label`: en el teléfono es la única
   forma de correrla sin mouse.
-- **Las páginas públicas son `.php`** (menos `panel.html`):
+- **Las páginas públicas son `.php`**:
   la primera línea incluye `apps/config/pagina.php`, que mira si hay sesión
   vigente y, si la hay, lee la cuenta de la base (`$persona_sesion`); el
   bloque de la derecha de la cabecera sale de
@@ -191,11 +212,10 @@ Convenciones:
   con POST a `salirController`. Se eligió PHP y no un endpoint + JavaScript porque el servidor ya
   sabe si hay sesión antes de mandar la página: sin parpadeo, sin más
   JavaScript que `tema.js`, y con redirecciones reales (`login.php` y
-  `registro.php` mandan al perfil si ya hay sesión). `panel.html` sigue
-  siendo la maqueta de una cuenta fija (Club Sur) con su propio menú:
-  ponerle el nombre de la sesión mezclaría a la persona real con la
-  identidad de muestra. `admin.html` ya no existe: `admin.php` desvía a
-  la administración real (ver Estado actual).
+  `registro.php` mandan al perfil si ya hay sesión). `panel.html` y
+  `admin.html` ya no existen: `panel.php` y `admin.php` desvían al panel
+  real del organizador y a la administración real (ver Estado actual), y
+  el `.htaccess` manda las direcciones `.html` viejas a las nuevas.
   Al agregar una página: `.php`, con esa primera línea, la llamada a
   `accionesCabecera()` en el `<header>`, el enlace "Saltar al contenido"
   primero y el `<main id="contenido">`, y el interruptor de modo noche con
@@ -203,13 +223,28 @@ Convenciones:
   día) y el `<meta name="theme-color">` antes de la hoja de estilos.
   `armar-deploy.sh` cambia sola la ruta del arranque en la copia del
   hosting.
+  **Desde la fase 2**: la hoja de estilos y `tema.js` se piden con
+  `recurso($ruta_publica, 'css/style.css')`, que agrega `?v=` y una marca
+  sacada del contenido del archivo (`md5_file`): cambia el CSS, cambia la
+  dirección, y el navegador lo baja de nuevo. El pie y el interruptor salen
+  de `piePagina()` (`apps/pie.php`), con el mismo marcado de siempre. Una
+  página que lee de la base carga sus modelos con
+  `require_once $carpeta_app . '/models/…'` (`$carpeta_app` lo deja
+  `pagina.php`: `apps/` en la máquina local, `stadion_app/` en el
+  hosting), abre su conexión con `conectarBD()` y la cierra antes del HTML.
+  **Nada escrito a mano**: los números, las tarjetas, las tablas y las
+  fechas salen de la base. Lo que organiza una cuenta de muestra
+  (`usuario.de_muestra = 1`, la migración 005) lleva al lado la marca
+  "De muestra" (`marcaMuestra()`, en `apps/ligas.php`).
 - **Todo formulario que cambia algo lleva el token de `apps/config/csrf.php`**:
   `campoCsrf()` dentro del `<form>`, y el controlador llama a
   `csrfValido()` antes de tocar nada. Si falla, `rechazarCsrf()` responde
   403 con el aviso y no se hace nada. Un token por sesión, el mismo para
   todos los formularios; `renovarCsrf()` lo cambia al iniciar sesión.
   Lo llevan perfil, foto, portada, cerrar sesión, pedir rol, aprobar,
-  rechazar, login y registro. `login.php` y `registro.php` llaman a
+  rechazar, login y registro, y desde la fase 2: crear liga, las seis
+  acciones del panel (anotar equipo, aceptar, rechazar, cerrar la
+  inscripción, armar y rehacer el fixture), armar un equipo y pedir lugar. `login.php` y `registro.php` llaman a
   `tokenCsrf()` antes de mandar HTML: son las únicas páginas que abren
   sesión sin nadie adentro. Al agregar un formulario, las dos cosas.
   **Pendiente de confirmación docente**: la defensa contra CSRF no figura
@@ -217,7 +252,19 @@ Convenciones:
 - **Lo que solo puede hacer un rol se comprueba en el servidor, en cada
   pedido**, con la cuenta de la sesión leída de la base (`tieneRol()`), no
   escondiendo el enlace. La administración: sin sesión manda al acceso,
-  sin el rol responde 403 y no muestra ni hace nada.
+  sin el rol responde 403 y no muestra ni hace nada. Crear liga y el
+  panel (rol organizador): sin sesión, al acceso; sin el rol, al abrirlos
+  llevan al perfil (`?aviso=organizador#roles`, con el aviso al lado de
+  "Pedir el rol de organizador"), y un POST sin el rol responde 403 sin
+  hacer nada. Sobre una liga, actúa solo quien la organiza: cada
+  repositorio lo comprueba con la fila del torneo bloqueada
+  (`bloquearYContar`), y un número de liga o de pedido ajeno no hace nada.
+- **Las cuentas de muestra** (`usuario.de_muestra = 1`: las tres
+  organizadoras de la migración 005, con correos `@ejemplo.invalid`) no
+  inician sesión nunca: su `hash_password` no es un hash, y además el
+  inicio de sesión las rechaza antes de mirar la clave ("Una cuenta de
+  muestra no abre sesión."). En la administración figuran con la marca
+  "De muestra".
 - Los `require_once` de los controladores van con `__DIR__` adelante, no
   con rutas relativas sueltas. Es lo que permite que el mismo controlador
   ande llamado directo (en XAMPP) o desde un puente del hosting, sin
@@ -386,7 +433,9 @@ dejaban ver interioridades del código.
   `ConfiguracionTorneo` y la tabla `configuracion_torneo`, y la ronda en
   curso que muestran Resumen y Calendario es la 8, que es la que se deduce
   de los `PJ = 7` de la tabla de posiciones y de `calendario.php`.
-  **La misma mecánica está en `panel.html`**, con Resumen (por defecto, va
+  (Lo que sigue de `panel.html` es historia: desde la fase 2 el panel es
+  real, `panel.php`, sin pestañas; ver el ítem de la fase 2.)
+  **La misma mecánica estaba en `panel.html`**, con Resumen (por defecto, va
   última), Mis torneos, Participantes, Resultados, Reportes y
   Configuración: las seis entradas del menú propio andan. Ahí el conmutador es el menú propio del
   panel, no una barra `.pestanas`. Mis torneos es la versión completa de la
@@ -443,10 +492,12 @@ dejaban ver interioridades del código.
   `rendimiento.php` desvía ahí), `panel.html` (panel del organizador) y
   `admin.html` (usuarios, módulos y registro de auditoría; hoy es la
   administración real y `admin.php` desvía ahí). Ninguna toca `apps/` ni
-  la base: llevan los datos de ejemplo escritos a mano.
+  la base: llevan los datos de ejemplo escritos a mano. (Desde la fase 2,
+  `calendario.php` y `llave.php` leen de la base, y `panel.html` es el
+  panel real, `panel.php`: ver el ítem de la fase 2.)
   La navegación compartida apunta ahora a destinos que existen:
   Calendario → `calendario.php`, Posiciones → `torneo.php#posiciones`,
-  Organizadores → `panel.html`.
+  Organizadores → `panel.php` (antes `panel.html`).
 - **Corregido de paso**: el maquetado desbordaba a lo ancho en
   `torneo.php`, `crear.php` y `perfil.php` (barra horizontal en el
   teléfono). La causa estaba en el CSS compartido: dentro de un grid o un
@@ -498,9 +549,12 @@ dejaban ver interioridades del código.
       viola el rango, y al correrla dos veces el segundo `ALTER` avisa
       que la restricción ya existe. `schema.sql` la trae incluida, así
       que una base nueva no la necesita.
-      Hoy van de la 001 a la 004. En una base que viene de antes, el
-      orden es: las que falten, la 003, la 004 y recién ahí
-      `primer_administrador.sql` (ver el ítem de la codificación, abajo).
+      Hoy van de la 001 a la 005. En una base que viene de antes, el
+      orden es: las que falten, la 003, la 004, `primer_administrador.sql`
+      (ver el ítem de la codificación, abajo) y la 005 (ver el ítem de la
+      fase 2). En el hosting se corren las copias de
+      `deploy/hosting-compartido/sql/migraciones/`, sin los bloques
+      "[solo servidor propio]".
 - [x] Integración con PHP usando POO — gestión de usuarios funcionando de
       punta a punta: `apps/config/database.php` (mysqli con `sgdm_app`,
       nunca root), `apps/models/UsuarioRepositorio.php` (alta, búsqueda,
@@ -866,6 +920,96 @@ dejaban ver interioridades del código.
       axe-core sin violaciones, y el barrido de contraste sin nada por
       debajo del mínimo en ninguno de los dos modos (salvo los campos
       deshabilitados de Configuración, exentos).
+
+- [x] **Fase 2 del motor de torneos: ligas** — crear una liga,
+      inscribir equipos, cerrar la inscripción y armar el fixture, con
+      las páginas públicas leyendo todo de la base. No incluye cargar
+      resultados ni actualizar la tabla desde la interfaz (fase 3), ni
+      eliminación directa ni suizo.
+      **Base** (`sql/migraciones/005_ligas.sql`, y la estructura también
+      en `schema.sql`): `usuario.de_muestra`; `torneo.fecha_inicio`
+      opcional (la liga puede empezar "a definir"; que no haya dos ligas
+      vigentes con el mismo nombre lo cuida `nombreEnUso()`, porque el
+      UNIQUE de nombre y fecha admite varios NULL);
+      `configuracion_torneo.criterio_desempate` (`diferencia` o `favor`);
+      la tabla `pedido_inscripcion` (el mismo esquema que `pedido_rol`: un
+      solo pendiente por equipo y liga con la columna calculada
+      `pendiente_de` y su UNIQUE; resuelto con fecha y responsable);
+      cuatro acciones de auditoría (`inscripcion`, `solicitud`, `cierre`,
+      `fixture`); el catálogo con tildes (`Fútbol`, `Eliminación
+      directa`) y `Fútbol 5`. 18 tablas, 33 CHECK, 29 claves foráneas, 15
+      índices únicos. El `GRANT` de `sgdm_app` sobre la tabla nueva va en
+      un bloque "[solo servidor propio]", y `armar-deploy.sh` genera la
+      copia de cada migración para el hosting sin esos bloques.
+      **Datos de muestra**, en la misma 005 y en una transacción: tres
+      cuentas organizadoras de muestra (Comunidad Vórtice, Club Sur,
+      Centro Juvenil Cerro; `@ejemplo.invalid`, con un `hash_password`
+      que no es un hash y `de_muestra = 1`: el inicio de sesión las
+      rechaza antes de mirar la clave) y tres ligas coherentes con las
+      páginas de siempre: Liga Valorant · Otoño (12 equipos, una vuelta,
+      7 fechas jugadas y la 8 en curso, con Titanes CS vs Vortex en vivo;
+      3/1/0, desempate por diferencia de mapas y después mapas a favor,
+      clasifican 4), Liga Barrial del Cerro (10 equipos, Fútbol 5, fecha
+      4 de 9) y Liga Interna Club Sur (inscripción abierta, 9 de 12, desde
+      el 4 de octubre). 31 equipos, 111 partidos, 57 jugados, cada uno con
+      su marcador; la tabla se calcula en la migración desde los
+      partidos, y la de la Valorant da la de la maqueta de `torneo.php`
+      (las 8 filas iguales). Los equipos están inscriptos en el orden del
+      método del círculo: la aplicación arma exactamente ese fixture. La
+      005 frena sin cambiar nada si falta la 003 o la 004, si ya se
+      aplicó (correrla dos veces no duplica nada) o si un nombre de
+      muestra ya está ocupado. `schema.sql` no trae los datos: una base
+      nueva es `schema.sql` y después la 005.
+      **Crear liga** (`crearController.php`, vista `apps/crear.php`;
+      `public/crear.php` desvía): nombre, juego o deporte, cupo 4 a 32,
+      una vuelta o ida y vuelta, puntos 1-10 / 0-10 / 0-10 (el empate no
+      pasa la victoria ni la derrota el empate), criterio de desempate y
+      fecha de inicio opcional. Validación en el servidor campo por campo
+      (ver Convenciones), CSRF, la liga nace con la inscripción abierta y
+      queda en la auditoría; después, al panel.
+      **Panel** (`panelController.php`, vista `apps/panel.php`;
+      `public/panel.php` desvía, y el `.htaccess` manda `panel.html` ahí
+      con un 301): las ligas de la cuenta con estado, anotados sobre el
+      cupo y pedidos; por liga, anotar equipos por nombre, aceptar y
+      rechazar pedidos, cerrar la inscripción (con 4 o más; los pedidos
+      pendientes quedan rechazados) y armar el fixture, o rehacerlo con
+      una casilla de confirmación si no tiene resultados. Estado vacío:
+      "Ninguna liga a cargo de esta cuenta. Toda liga empieza con un
+      nombre y un cupo." Cada acción queda en la auditoría y vuelve al
+      panel con `?aviso=` (un código, nunca un texto).
+      **Anotar a mano**: si el nombre es de un equipo con capitán, no (ese
+      entra con su pedido); si es de un equipo sin capitán que juega en
+      la liga de otro organizador, tampoco; si no, se reusa o se crea.
+      **Pedir lugar**: un jugador arma su equipo en el perfil (pestaña Mis
+      torneos, "Mis equipos"; queda de capitán e integrante) y lo pide
+      desde la página de la liga (`inscripcionController.php`). El cupo
+      se respeta al anotar y al aceptar, con la fila del torneo
+      bloqueada (`SELECT … FOR UPDATE`).
+      **Fixture** (`Fixture.php`, `FixtureRepositorio.php`): método del
+      círculo, un libre por fecha si son impares, la vuelta con la
+      localía al revés; todo en una transacción, que también deja la fila
+      de cada equipo en la tabla y las fechas previstas. Probado de 4 a
+      32 equipos en las dos variantes.
+      **Páginas públicas desde la base**: `torneos.php`, `torneo.php`
+      (`?id=N`; sin número, la liga destacada), `calendario.php`
+      (`?semana=`, con semana anterior, hoy y siguiente; el día de la
+      semana sale de la fecha), `llave.php` (dice que ninguna competencia
+      usa la llave: solo hay ligas) y también `index.php` (sus números,
+      tarjetas y el recuadro en vivo). Marca "De muestra" en todo lo de
+      la 005. La Copa Interliceal, el Tenis de Mesa, el LoL y el Magic de
+      la maqueta ya no aparecen: no están en la base.
+      **CSS versionado** (`recurso()`) y **baterías en `tests/`** con su
+      README (ver Convenciones y `tests/README.md`), sin contraseñas ni
+      datos reales; `armar-deploy.sh` corta si una carpeta `tests` se
+      cuela en la copia.
+      **Pendiente de confirmación docente**: las transacciones desde PHP
+      y el bloqueo con `FOR UPDATE`; el método del círculo; la columna
+      calculada de `pedido_inscripcion`; `ADD COLUMN IF NOT EXISTS`,
+      `ADD CONSTRAINT IF NOT EXISTS`, `DROP CONSTRAINT IF EXISTS` y
+      `CREATE TABLE IF NOT EXISTS` (de MariaDB); las tablas temporales de
+      la migración y sus consultas a `information_schema`; `md5_file()`
+      para la versión del CSS; y Node, Playwright y axe-core, que son
+      herramientas de prueba y no van al hosting.
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.

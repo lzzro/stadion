@@ -2,7 +2,9 @@
 
 Pasos para publicar el sitio en un hosting compartido tipo Namecheap, con
 las funciones reales andando: **alta de cuenta, inicio de sesión, perfil,
-pedido del rol de organizador y administración**.
+pedido del rol de organizador, administración y ligas** (crear una liga,
+inscribir equipos, armar el fixture, y las páginas públicas leyendo de la
+base).
 
 > **Nada de esto se hace solo.** Los archivos están preparados en el
 > repositorio, pero la subida, la base de datos y la configuración las hacés
@@ -40,10 +42,10 @@ este documento:
 ├── public_html/              ← lo único que se ve desde internet
 │   ├── .htaccess             ← portada index.php y desvío de las .html viejas
 │   ├── index.php  torneos.php  torneo.php  calendario.php  llave.php
-│   ├── crear.php  login.php  registro.php
+│   ├── login.php  registro.php
 │   ├── perfil.php  rendimiento.php   ← desvíos al perfil real
 │   ├── admin.php             ← desvío a la administración real
-│   ├── panel.html
+│   ├── crear.php  panel.php  ← desvíos a crear liga y al panel real
 │   ├── css/  js/  img/
 │   ├── subidas/              ← fotos de perfil y portadas que sube la gente
 │   │   └── .htaccess         ← impide ejecutar nada en esta carpeta
@@ -52,7 +54,10 @@ este documento:
 │       ├── login.php
 │       ├── perfil.php
 │       ├── salir.php
-│       └── admin.php
+│       ├── admin.php
+│       ├── crear.php         ← crear una liga
+│       ├── panel.php         ← panel del organizador
+│       └── inscripcion.php   ← pedir lugar en una liga
 │
 └── stadion_app/              ← FUERA de public_html. Nadie lo alcanza
     ├── config/
@@ -62,12 +67,13 @@ este documento:
     │   ├── sesion.php
     │   ├── csrf.php                  ← el token de los formularios
     │   ├── pagina.php                ← lo incluye cada página .php
+    │   ├── recursos.php              ← el CSS y el JS con su versión
     │   └── rutas_paginas.php         ← direcciones del hosting (generado)
     ├── controllers/          ← los controladores de verdad
     ├── models/
-    ├── cabecera.php
+    ├── cabecera.php  pie.php  ligas.php  fechas.php
     ├── index.php
-    ├── perfil.php
+    ├── perfil.php  crear.php  panel.php
     └── admin.php
 ```
 
@@ -94,7 +100,7 @@ entre "está prohibido pedirlo" y "no hay forma de pedirlo".
 ### Qué son los puentes
 
 Los formularios necesitan llegar a algo por dirección web, y los
-controladores están afuera. Los puentes resuelven eso: son cinco archivos
+controladores están afuera. Los puentes resuelven eso: son ocho archivos
 cortos dentro de `public_html/controllers/` que no deciden nada, solo llaman
 al controlador de verdad.
 
@@ -118,7 +124,8 @@ deploy/hosting-compartido/
 ├── public_html/     → sube a public_html/ del hosting
 ├── stadion_app/     → sube AL LADO de public_html/, NO adentro
 └── sql/
-    └── schema-hosting.sql   → NO se sube: se importa en phpMyAdmin (paso 2)
+    ├── schema-hosting.sql   → NO se sube: se importa en phpMyAdmin (paso 2)
+    └── migraciones/         → NO se suben: se corren en phpMyAdmin (paso 2)
 ```
 
 Esa carpeta **se genera, no se edita a mano**. Si tocás algo en `public/` o
@@ -128,9 +135,10 @@ en `apps/`, se rehace con:
 ./scripts/armar-deploy.sh
 ```
 
-El script copia todo, ajusta las rutas de los formularios, escribe los cinco
+El script copia todo, ajusta las rutas de los formularios, escribe los ocho
 puentes, arma el esquema para el hosting (`sql/schema-hosting.sql`, ver el
-paso 2) y **comprueba que la configuración local con tu contraseña de XAMPP
+paso 2) y la copia de cada migración sin lo que es solo de un servidor
+propio (`sql/migraciones/`), y **comprueba que la configuración local con tu contraseña de XAMPP
 no se haya colado en la copia**. Si aparece, corta con error.
 
 Editar `deploy/` a mano es el camino seguro a que la copia y el original
@@ -202,9 +210,14 @@ Es para una base **vacía**. Si la base ya tiene tablas, la importación
 frena en la primera ("Table 'rol' already exists") sin borrar ni cambiar
 nada: para una base que ya existe van las migraciones, más abajo.
 
-Cuando termina, en la lista de la izquierda tienen que aparecer **17 tablas**
+Cuando termina, en la lista de la izquierda tienen que aparecer **18 tablas**
 y los catálogos (`rol`, `disciplina`, `tipo_torneo`, `modulo_competencia`)
 ya con sus filas, y todas en `utf8mb4` (ver **Comprobar la codificación**).
+
+Después, en una base nueva también, la **005** de
+`deploy/hosting-compartido/sql/migraciones/`: con el esquema ya importado
+no cambia la estructura, y carga las tres ligas de muestra que muestran
+las páginas públicas (ver **La 005, paso a paso**, más abajo).
 
 Si `rol` quedara vacío, el alta de cuentas falla al asignar el rol
 `jugador`. Comprobalo antes de seguir.
@@ -222,6 +235,7 @@ que el esquema: con `lucasmar_sgdm` elegida, pestaña **SQL** o **Import**.
 | `002_imagenes_usuario.sql` | `foto_perfil` y `foto_portada` en `usuario`, con sus dos CHECK. **Sin esta, el perfil no abre** |
 | `003_pedidos_de_rol.sql` | La tabla `pedido_rol` y las tres acciones nuevas de `auditoria` (`pedido_rol`, `aprobacion`, `rechazo`). **Sin esta, pedir el rol de organizador no anda** |
 | `004_utf8mb4.sql` | La base y las 17 tablas de `latin1` a `utf8mb4`, sin perder datos. **Sin esta, un emoji o una letra fuera del alfabeto de Europa occidental hacen fallar el perfil** |
+| `005_ligas.sql` | La fase 2: la marca de las cuentas de muestra, la fecha de inicio opcional, el criterio de desempate, la tabla `pedido_inscripcion`, cuatro acciones de `auditoria` y el catálogo con tildes; y los **datos de muestra** (tres ligas con su historial). **Sin esta, crear una liga, el panel y las páginas de torneos no andan** |
 
 **El orden importa.** En una base que viene de antes, sin administrador y
 con las tablas en `latin1` (el caso del hosting):
@@ -229,7 +243,13 @@ con las tablas en `latin1` (el caso del hosting):
 1. las que falten de la 001 y la 002,
 2. la **003**,
 3. la **004**,
-4. el **primer administrador** (paso 7).
+4. el **primer administrador** (paso 7), si todavía no hay,
+5. la **005**.
+
+**En el hosting, las migraciones se corren desde
+`deploy/hosting-compartido/sql/migraciones/`**, no desde `sql/migraciones/`:
+son las mismas, sin los bloques "[solo servidor propio]" (el `GRANT` de
+`sgdm_app`), que ahí dan error y en phpMyAdmin esconden los resultados.
 
 La 004 necesita la tabla de la 003: si la 003 no corrió, la 004 frena en su
 primera consulta sin cambiar nada. El primer administrador necesita la 003
@@ -247,8 +267,8 @@ XAMPP; en el hosting, si marcaste `DELETE` en el paso 1, alcanza a todas
 las tablas. Los pedidos igual no se borran: ningún código del sitio lo
 intenta.
 
-Una base importada con el esquema actual ya trae todo y no necesita
-ninguna.
+Una base importada con el esquema actual ya trae toda la estructura: de
+las migraciones, solo necesita la 005, por los datos de muestra.
 
 ### La 004, paso a paso
 
@@ -291,6 +311,41 @@ Si frena:
   cambió nada.
 
 Correrla dos veces no hace daño: la segunda vez da el mismo resultado.
+
+### La 005, paso a paso
+
+1. **Antes, un respaldo**, igual que para la 004 (Export → Quick → SQL).
+2. Con la base elegida, pestaña **Import**, subí
+   **`deploy/hosting-compartido/sql/migraciones/005_ligas.sql`** y **Go**
+   (o pestaña **SQL** y pegalo entero). Las opciones de abajo, como vienen.
+3. El último resultado tiene que mostrar exactamente:
+
+   | cuentas_de_muestra | claves_usables | ligas_de_muestra | estados | equipos | partidos | jugados | en_vivo | filas_tabla | puntero | octavo | tablas | restricciones_check | claves_foraneas | indices_unicos |
+   |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+   | 3 | 0 | 3 | en_curso / inscripcion / en_curso | 31 | 111 | 57 | 1 | 22 | Titanes CS · 18 pts · +9 | Liceo 3 · 7 pts · -3 | 18 | 33 | 29 | 15 |
+
+   Los últimos tres son los de una base nueva con el esquema actual. Si
+   algo no coincide, no sigas y avisá.
+4. Entrá a `https://TU-DOMINIO/torneos.php`: las tres ligas, cada una con
+   la marca "De muestra"; y a `torneo.php#posiciones`: la tabla de la Liga
+   Valorant, con Titanes CS primero (18 puntos).
+
+Si frena (en todos los casos, sin cambiar nada):
+
+- **"Table '...pedido_rol' doesn't exist"**: falta la 003.
+- **"CONSTRAINT `ck_005_falta_la_004` failed"**: falta la 004.
+- **"CONSTRAINT `ck_005_ya_esta_aplicada` failed"**: la 005 ya se corrió.
+  No hay nada que hacer: correrla dos veces no duplica nada. Para ver el
+  resultado, correr sola la última consulta del archivo (la que empieza
+  con `SELECT` después de "6. El resultado").
+- **"CONSTRAINT `ck_005_nombres_libres` failed"**: ya hay un equipo o una
+  cuenta con alguno de los nombres o correos de muestra. La consulta **2c**
+  del archivo, corrida sola (junto con el `CREATE TEMPORARY TABLE` y el
+  `INSERT` de `carga_005_equipo` de arriba), dice cuáles.
+
+Los datos de muestra van en una transacción: si algo falla a mitad de la
+carga, no queda nada a medias. Las tres cuentas organizadoras de muestra
+(`@ejemplo.invalid`) no inician sesión con ninguna clave.
 
 ### Comprobar la codificación
 
@@ -459,6 +514,12 @@ de arriba.
 | 16 | Abrir `/controllers/perfil.php` en una ventana privada | Manda a `login.php`: sin sesión no hay perfil |
 | 17 | Entrar con la cuenta de prueba y, en el perfil, **Pedir el rol de organizador** (tarjeta Roles) | "El pedido del rol de organizador queda en revision." y la tarjeta dice "pedido en revisión" |
 | 18 | Abrir `https://TU-DOMINIO/admin.php` con esa misma cuenta | "Esta pagina es solo para la administracion.": sin el rol, no se ve nada |
+| 19 | Con esa cuenta (sin el rol de organizador), **Crear torneo** en la cabecera | Lleva al perfil, a la tarjeta Roles, con el aviso "Crear y organizar ligas pide el rol de organizador…" |
+| 20 | Con el primer administrador (paso 7), aprobar el pedido; volver a entrar con la cuenta de prueba y **Crear torneo** | El formulario "Nueva liga". Crear una con cupo 4 | 
+| 21 | En el panel (**Organizadores**), anotar 4 equipos por nombre | "El equipo queda anotado." cuatro veces; "Anotar equipo" se apaga con el cupo completo |
+| 22 | **Cerrar la inscripción** y después **Armar el fixture** | "La inscripción queda cerrada…" y "El fixture queda armado."; en la página de la liga, 3 fechas de 2 partidos |
+| 23 | En `phpMyAdmin`, la tabla `auditoria` | Las filas `alta` (torneo), `inscripcion`, `cierre` y `fixture` de esa liga |
+| 24 | Entrar con `vortice@ejemplo.invalid` y cualquier clave | "Una cuenta de muestra no abre sesión." |
 
 ### La prueba de la carpeta de subidas
 
@@ -565,7 +626,7 @@ lo tiene que aprobar **otra** cuenta con el rol administrador.
 | "No hay conexión con la base de datos" | Los datos están, pero alguno no coincide | Revisá el prefijo de la cuenta en el nombre de la base y del usuario |
 | El formulario da 404 | Los puentes no quedaron en `public_html/controllers/` | Paso 3 |
 | La página de resultado sale sin estilos | Falta `css/` en `public_html/` | Paso 3 |
-| "El sitio no encuentra su aplicación" | `stadion_app/` no está al lado de `public_html/` | Paso 3, o cambiá la línea de `$APLICACION` en los cinco puentes |
+| "El sitio no encuentra su aplicación" | `stadion_app/` no está al lado de `public_html/` | Paso 3, o cambiá la línea de `$APLICACION` en los ocho puentes |
 | Una página da error 500 o sale en blanco apenas se abre | `stadion_app/` no está al lado de `public_html/`: cada página lo incluye | Paso 3 |
 | La portada muestra una lista de archivos, o la vieja `index.html` | Falta `public_html/.htaccess` | Paso 3: mostrá los archivos ocultos y comprobá que esté |
 | El perfil no abre y el `error_log` dice `Unknown column 'foto_perfil'` | Falta la migración 002 | Paso 2, **Si la base ya estaba importada de antes** |
@@ -624,6 +685,30 @@ de desarrollo:
 | `/stadion_app/models/Usuario.php` | **404** |
 | `/../stadion_app/config/database.local.php` | **404** |
 | `/controllers/../../stadion_app/config/database.local.php` | **404** |
+
+### Las ligas (fase 2 del motor de torneos)
+
+Probado igual, en **las dos disposiciones**: la local (mod_php contra
+MariaDB 10.11) y la del hosting (PHP-FPM sobre la copia de
+`armar-deploy.sh`, contra MariaDB 11.4 con la base migrada desde `latin1`).
+Las baterías están en `tests/` (ver `tests/README.md`):
+
+- **La migración 005**: en los dos servidores, sobre una base con el
+  esquema anterior, sobre una base nueva, dos veces seguidas, sin la 003,
+  sin la 004, con un nombre de equipo ya ocupado y con una falla a mitad
+  de la carga (no queda nada a medias). La base migrada queda idéntica a
+  una nueva.
+- **Los datos de muestra**: la tabla recalculada desde los partidos es la
+  guardada, y la de las páginas de siempre; el fixture de muestra es el que
+  arma la aplicación con esos equipos.
+- **De punta a punta**, con cuentas nuevas en cada corrida: crear una liga
+  (con los errores al lado de cada campo), anotar equipos, armar un equipo
+  y pedir lugar, aceptar y rechazar, el cupo, cerrar la inscripción, el
+  fixture (armar, rehacer con confirmación, nunca con resultados), ida y
+  vuelta, y los permisos: sin sesión, sin el rol, sobre la liga de otra
+  cuenta, sin token.
+- **Las páginas públicas** leyendo de la base, y **axe-core** en día y
+  noche, en 390 y 1024 px.
 
 ### La cabecera, el perfil y las subidas (segunda entrega)
 
