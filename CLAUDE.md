@@ -98,31 +98,83 @@ Convenciones:
 - Sin routing, sin JavaScript salvo lo mínimo indispensable. Sesiones solo
   las mínimas para que el inicio de sesión signifique algo (ver arriba).
 - **La marca `class="activo"` del menú compartido va escrita a mano en cada
-  página.** Cada una marca la entrada de la que es destino: `index.php` →
+  página, siempre con su `aria-current` en la misma entrada**
+  (`aria-current="page"` si el enlace lleva a la página abierta, `"true"`
+  si marca la sección de la que depende). El menú marca a lo sumo una
+  entrada. Cada página marca la entrada de la que es destino: `index.php` →
   Inicio, `torneos.php` → Torneos, `calendario.php` → Calendario,
-  `crear.php` y `panel.html` → Organizadores. El perfil real
+  `crear.php` (con `"true"`) y `panel.html` → Organizadores. El perfil real
   (`apps/perfil.php`) no cuelga de ninguna entrada y no marca ninguna, y
-  `llave.php`, que es el detalle de un torneo, marca Torneos.
+  `llave.php`, que es el detalle de un torneo, marca Torneos (`"true"`).
+  Las pestañas activas (`.pestanas a.activo`) llevan `aria-current="page"`.
   `panel.html` y la administración (`apps/admin.php`) reemplazan el menú
   compartido por el suyo. El de la administración son enlaces a sus
   secciones (Pedidos, Cuentas, Módulos, Auditoría) en una sola página que
   se recorre, sin vistas que cambien: no marca ninguno.
   Al agregar una página, marcar su entrada acá también.
-  **Las excepciones son las dos páginas con pestañas**, donde la misma
-  dirección muestra una vista u otra según el ancla: ahí no hay marca
-  escrita a mano, la pone el CSS.
+  **En las páginas con pestañas** (`torneo.php`, `panel.html` y el
+  perfil) la misma dirección muestra una vista u otra según el ancla, y
+  el HTML no puede cambiar solo. Lo que tiene que acompañar a la vista
+  abierta va **dos veces en el HTML**, cada copia con lo suyo escrito a
+  mano, y el CSS deja ver una sola: `data-vista="x"` se ve solo con la
+  vista x abierta, `data-fuera="x"` con cualquier otra (`display: none`
+  saca a la otra copia también del teclado y del lector de pantalla).
+  Son dos cosas: la entrada marcada del menú, con su `aria-current`, y el
+  destino de "Saltar al contenido".
   En `torneo.php`, sin ancla es el detalle de un torneo y marca Torneos,
   igual que `llave.php`; con `#posiciones` marca Posiciones, que es a
-  donde apunta ese enlace del menú. El gancho es la clase `ficha-torneo`.
+  donde apunta ese enlace del menú: Torneos y Posiciones van dos veces.
   En `panel.html` el menú es el suyo propio y hace de barra de pestañas:
   sin ancla marca Resumen, y con `#mis-torneos`, `#participantes`,
   `#resultados`, `#reportes` o `#configuracion` marca la entrada del mismo
-  nombre. El gancho
-  es la clase `panel-organizador`.
-  **Pendiente de confirmación docente**: las dos reglas usan `:has()`, que
+  nombre: las seis entradas van dos veces. Al agregar una vista, sumar su
+  par de reglas en el bloque "Lo que acompaña a la vista abierta" de
+  `style.css`.
+  **Pendiente de confirmación docente**: esas reglas usan `:has()`, que
   no figura entre los temas de clase. El combinador `~` de las pestañas no
-  servía en ninguna de las dos, porque el menú es hijo de `.pagina` y las
-  vistas son nietas (queda explicado en `style.css`).
+  servía, porque el menú y el enlace de saltar no son hermanos de las
+  vistas (queda explicado en `style.css`).
+- **"Saltar al contenido" es el primer enlace de toda página**
+  (`<a class="saltar" href="#contenido">`, visible solo con el foco) y
+  lleva al `<main id="contenido">`. En `login.php` y `registro.php` el
+  formulario es el `<main>` y el panel de mármol, el `<header>`. En las
+  páginas con pestañas va una copia por vista (ver arriba): si llevara
+  siempre a `#contenido`, cambiaría el ancla y cerraría la vista abierta.
+- **Ningún enlace ni botón sin efecto.** Nada de `href="#"`: lo que tiene
+  destino real apunta ahí; lo que no, es texto con
+  `<span class="enlace-apagado" aria-disabled="true">` (se ve, en gris y
+  con el cursor de prohibido, pero no es un control). Un control de
+  formulario que no hace nada en el servidor ("Recordarme", "Guardar
+  borrador", los filtros) no se pone. **Una excepción, a decidir por
+  Lucas**: "Continuar" de `crear.php` sigue, porque es el paso de la
+  maqueta del asistente y muestra la validación del navegador (campos
+  obligatorios, largos, mínimos y máximos), pero su `action="#"` no guarda
+  nada: la página se recarga vacía. Su controlador llega con el motor de
+  torneos.
+- **Cada enlace o botón se entiende solo, fuera de contexto**: los que se
+  repiten ("Ver torneo", "Cargar", "Administrar") llevan el nombre de lo
+  suyo en un `<span class="visualmente-oculto">`, y los de la
+  administración, en `aria-label` ("Aprobar el pedido de …"). Las flechas
+  (→, ←) van en `<span aria-hidden="true">`: el lector de pantalla no las
+  lee.
+- **Formularios**: una ayuda que hace falta para completar un campo
+  ("Mínimo 10 caracteres.") va visible debajo, en `<p class="ayuda-campo"
+  id="…">`, junto con el campo en un `<div class="campo">`, y el campo la
+  nombra con `aria-describedby`; nunca solo en el texto de ejemplo ni en
+  un `title`. Correo y alias con `spellcheck="false"` y
+  `autocapitalize="off"`. Los avisos de los controladores van dentro de
+  `<div role="alert">` (la lista de errores) o en un `<p role="status">`
+  (el mensaje de resultado). Como la página llega entera del servidor,
+  esos roles no se anuncian solos: con errores, el `<title>` empieza con
+  "Aviso ·", que es lo primero que lee el lector de pantalla (vista de
+  resultado, perfil y administración).
+  Un campo mal completado se marca con `:user-invalid`: borde punteado en
+  `--ink` (la casilla, con contorno punteado), nunca cinabrio.
+  **Pendiente de confirmación docente**: `:user-invalid` no figura entre
+  los temas de clase (queda anotado en `style.css`).
+- **Una tabla que se desplaza** (`.tabla-scroll`) lleva `tabindex="0"`,
+  `role="region"` y su nombre en `aria-label`: en el teléfono es la única
+  forma de correrla sin mouse.
 - **Las páginas públicas son `.php`** (menos `panel.html`):
   la primera línea incluye `apps/config/pagina.php`, que mira si hay sesión
   vigente y, si la hay, lee la cuenta de la base (`$persona_sesion`); el
@@ -144,9 +196,13 @@ Convenciones:
   ponerle el nombre de la sesión mezclaría a la persona real con la
   identidad de muestra. `admin.html` ya no existe: `admin.php` desvía a
   la administración real (ver Estado actual).
-  Al agregar una página: `.php`, con esa primera línea, y la llamada a
-  `accionesCabecera()` en el `<header>`. `armar-deploy.sh` cambia sola la
-  ruta del arranque en la copia del hosting.
+  Al agregar una página: `.php`, con esa primera línea, la llamada a
+  `accionesCabecera()` en el `<header>`, el enlace "Saltar al contenido"
+  primero y el `<main id="contenido">`, y el interruptor de modo noche con
+  `aria-label="Modo noche"` y `aria-pressed="false"` (`tema.js` lo pone al
+  día) y el `<meta name="theme-color">` antes de la hoja de estilos.
+  `armar-deploy.sh` cambia sola la ruta del arranque en la copia del
+  hosting.
 - **Todo formulario que cambia algo lleva el token de `apps/config/csrf.php`**:
   `campoCsrf()` dentro del `<form>`, y el controlador llama a
   `csrfValido()` antes de tocar nada. Si falla, `rechazarCsrf()` responde
@@ -225,41 +281,24 @@ identidad.
 Los tokens viven en `public/css/style.css`: las variables `--pent`,
 `--pario`, `--ink`, `--olivo`, `--cinabrio`, etc. en `:root`, redefinidas
 en `[data-theme="noche"]`. Fuentes: Cormorant Garamond (títulos), Jost
-(interfaz), GFS Didot (solo epígrafes en griego). No introducir otros
-colores ni fuentes sin que se pida explícitamente.
+(interfaz), GFS Didot (solo epígrafes en griego, `--griego`). No
+introducir otros colores ni fuentes sin que se pida explícitamente.
+**Toda combinación nueva de colores cumple el contraste mínimo de WCAG 2.2
+AA** (4,5:1 texto; 3:1 bordes de campos y formas), igual que dice
+`DESIGN.md`. **Pendiente de decisión de Lucas**: de noche, el borde de los
+campos (`--campo`, igual que `--veta`, #3A362E) da 1,47:1 sobre `--pario`,
+debajo de 3:1. No se cambió porque el pedido dejaba el modo noche sin
+tocar; con `--ink3` de noche (#A79F8C) daría 6,74:1.
 
-**Verificado contra `style.css`** (al sumar `DESIGN.md`): coinciden los 30
-colores (15 de día y 15 de noche), las dos pilas de fuentes, los pesos,
-la marca, la navegación, los botones, las etiquetas, los estados (color y
-forma), las pestañas, los formularios y los de solo lectura, la marca "De
-muestra", el avatar, el interruptor de tema, los gráficos, los círculos,
-los cortes (768, 1024 y 1440 px), y que no hay sombras, degradados ni
-animaciones. **Diferencias, pendientes de decisión de Lucas** (no se
-corrigieron: hasta que decida, no "arreglarlas" de paso en otro cambio):
-- Epígrafes griegos: `DESIGN.md` dice GFS Didot; `style.css` usa
-  `var(--serif)` y GFS Didot no se carga en ningún lado. Como la Cormorant
-  Garamond de Google Fonts no trae griego, hoy se ven en la fuente de
-  respaldo (Georgia en Windows).
-- Cuerpo: `DESIGN.md` 15px; `style.css` 16px (el interlineado 1.55
-  coincide).
-- `h1`: interlineado 1.1 en `DESIGN.md`; 1.02 en `style.css`.
-- Tarjetas: radio de 2px en `DESIGN.md`; `.tarjeta` no tiene radio.
-- Cifras de ancho fijo: `DESIGN.md` las pide en marcadores y tablas;
-  `style.css` las tiene en los marcadores, no en los números de las
-  tablas (`td.num`).
-- `.chip`: separación de letras .1em, debajo del rango de las versalitas
-  (.12em a .28em).
-- Seis `<strong>` con la negrita por defecto del navegador (se ve en Jost
-  600): las tres opciones de formato de `crear.php`, el organizador en la
-  intro de `llave.php` y `torneo.php`, y "Organizador" en la tarjeta de
-  Roles del perfil. El resto de los `<strong>` van en 500.
-- Tablas: `DESIGN.md` dice "divisores `veta`"; la línea bajo el
-  encabezado es `veta`, pero las de entre filas son `hair`.
-- Cabecera sin sesión: `DESIGN.md` dice "Iniciar sesión" y "Crear
-  cuenta"; el sitio (y la convención de este archivo) muestra "Iniciar
-  sesión" y "Crear torneo".
-- Menú: `DESIGN.md` dice que siempre hay una sola entrada marcada; el
-  perfil y la administración no marcan ninguna (ver Convenciones).
+**Verificado contra `style.css`**: coinciden los colores de día y de
+noche, las pilas de fuentes, los pesos, los componentes y los cortes. Las
+diez diferencias que había al sumar `DESIGN.md` están resueltas: donde
+`DESIGN.md` tenía un detalle que no era el del sitio, se corrigió
+`DESIGN.md` (cuerpo 16px, `h1` a 1.02, tarjetas sin radio, versalitas de
+.1em a .28em, divisores de tabla, cabecera sin sesión, menú con a lo sumo
+una entrada); donde era una regla de identidad, se corrigió `style.css`
+(GFS Didot en los epígrafes, cifras de ancho fijo en las tablas, negrita en
+500).
 
 ## Motivos decorativos
 
@@ -277,6 +316,8 @@ encabezados.
   para los mensajes que devuelvan los modelos y los controladores.
 - Los epígrafes en griego quedan **sin traducir en pantalla**. La traducción
   va en un documento aparte para los docentes, nunca inline ni en un tooltip.
+  Llevan `lang="grc"` (griego antiguo), para que el lector de pantalla no
+  los lea como castellano: `<p class="epigrafe" lang="grc">`.
 - **Frases prohibidas.** No usarlas en ningún texto nuevo:
   - "Tres formatos, un solo motor", y en general la fórmula "tres X, un solo X".
   - "con la calma de una tabla bien hecha".
@@ -316,9 +357,10 @@ dejaban ver interioridades del código.
   pantalla se pregunta por el rol.
 - Identidad visual completa (Agón y Stadion).
 - Modo noche: segundo bloque de variables bajo `[data-theme="noche"]` en
-  `style.css` e interruptor fijo abajo a la derecha en las 6 páginas. El
-  único JavaScript del proyecto (`public/js/tema.js`) solo cambia el
-  atributo y guarda la preferencia; el resto lo resuelve el CSS.
+  `style.css` e interruptor fijo abajo a la derecha en todas las páginas.
+  El único JavaScript del proyecto (`public/js/tema.js`) cambia el
+  atributo, guarda la preferencia y deja al día `aria-pressed` del botón y
+  el `<meta name="theme-color">`; el resto lo resuelve el CSS.
 - Sistema de estados de torneo: chip reusable `.estado` con cinco
   variantes (`en-vivo`, `inscripcion`, `en-juego`, `vencedor`, `cerrado`),
   cada una con color **y** forma, aplicado en `torneos.php`, `torneo.php`
@@ -334,7 +376,10 @@ dejaban ver interioridades del código.
   después — un selector no puede volver hacia atrás. A las otras ocultas no
   hace falta apagarlas: solo se prende la que coincide con el ancla, y ancla
   hay una sola. Cambiar cuál es la vista por defecto es mover su bloque al
-  final y correr los nombres de las tres reglas del CSS, nada más.
+  final, correr los nombres de las tres reglas del CSS y los del bloque
+  "Lo que acompaña a la vista abierta", y pasar a la vista nueva las
+  copias del menú y de "Saltar al contenido" (`data-vista`, `data-fuera`
+  y el `href="#contenido"`).
   **Sin ancla se ve Resumen.** `torneo.php#posiciones`, que es a donde
   apunta el menú compartido, sigue abriendo Posiciones (probado desde las
   cinco páginas que tienen ese menú).
@@ -356,7 +401,8 @@ dejaban ver interioridades del código.
   cuenta solo pendientes de carga: 4 + 2 = 6; el programado no suma.
   "Publicar ronda 3 →" aparece apagado (`.enlace-apagado`, sin enlace) en
   la pestaña y en el Resumen, con la misma nota: "Faltan 5 marcadores",
-  los 4 pendientes más el partido por jugar. Ningún "Cargar" hace nada.
+  los 4 pendientes más el partido por jugar. Ningún "Cargar" hace nada:
+  es texto apagado (`.enlace-apagado`), como "Administrar" y "Ver la llave".
   Participantes no suma ningún nombre: los 24 del Abierto de Tenis de Mesa
   son los de las 12 mesas de Resultados, por apellido, con su mesa y el
   estado de su partido de la ronda 3 (14 cargado, 8 pendiente de carga,
@@ -724,6 +770,70 @@ dejaban ver interioridades del código.
       igual en las dos. La única diferencia esperada: con los permisos de
       cPanel, `sgdm_app` puede borrar en `pedido_rol` (cPanel no da
       permisos por tabla); la prueba lo mira sin borrar nada.
+
+- [x] Accesibilidad (auditoría sobre `8b8a1f5`) y las diez diferencias con
+      `DESIGN.md` — **Contraste de día** (WCAG 1.4.3 y 1.4.11): `--ink3` y
+      `--cerrado` a #706B61 (4,58:1 sobre `--pent`), `--enjuego` a #836838
+      (4,53:1), hover del primario con su propio tono `--olivoH` #697851
+      (4,53:1; `--olivo2` sigue igual en el resto), y el borde de los
+      campos con su token `--campo` (= `--ink3` de día). La noche no se
+      tocó (ver el pendiente en "Sistema de diseño"). El barrido de
+      contraste encontró tres cosas más, corregidas con colores de la
+      paleta: la etiqueta sobre olivo pálido (4,32:1, ahora `--ink2` con
+      la clase `.tarjeta-olivo`), el texto de ejemplo de los campos (el
+      gris del navegador, 4,38:1; ahora `--ink3`) y los avisos, que iban
+      en cinabrio (ahora `--ink` con una raya a la izquierda). Campo mal
+      completado: borde punteado en `--ink` con `:user-invalid`.
+      **Controles sin efecto**: los 37 `href="#"` tienen destino real o
+      son texto apagado; fuera "Recordarme", "Guardar borrador", "Solo mis
+      torneos" y, con el mismo criterio, el buscador y los filtros de
+      `torneos.php`; los filtros de disciplina de `calendario.php` pasaron
+      a texto ("Disciplinas de la semana"). Destinos nuevos: "← Volver" de
+      crear va a `panel.html#mis-torneos`; en el inicio, la Copa
+      Interliceal va a `llave.php` (antes iba a la Liga Valorant) y "Tabla
+      completa" a `torneo.php#posiciones`.
+      **Teclado y lectores**: "Saltar al contenido" en todas las páginas;
+      `aria-current` en el menú y en las pestañas, que acompaña a la vista
+      abierta con las copias `data-vista`/`data-fuera` (reemplazan a las
+      reglas de `:has()` que marcaban el menú, y a los ganchos
+      `ficha-torneo` y `panel-organizador`); `scroll-margin-top` en los
+      destinos; el interruptor con nombre fijo "Modo noche" y
+      `aria-pressed`, también en la vista de resultado, que no lo tenía;
+      `<meta name="theme-color">` que `tema.js` cambia con el modo; ayudas
+      visibles con `aria-describedby`; `role="status"`/`role="alert"` y el
+      "Aviso ·" del título; contexto oculto en los enlaces repetidos y
+      `aria-label` en Aprobar/Rechazar; flechas fuera del lector; `width` y
+      `height` en el avatar y la portada; comillas « » en Heródoto;
+      `lang="grc"` en los epígrafes; espacios de verdad alrededor de cada
+      "vs" (el lector leía "P. RivasvsL. Cabrera"); tablas desplazables
+      enfocables (`tabindex="0"`, `role="region"`); rótulos de fila de
+      Reglas como `<th scope="row">`; paso activo de crear con
+      `aria-current="step"` y subrayado; títulos ocultos donde el orden de
+      encabezados saltaba; login y registro con `<header>` y `<main>`
+      (idénticos píxel a píxel).
+      **Las diez diferencias con `DESIGN.md`**: resueltas según la regla
+      de Lucas (ver "Sistema de diseño").
+      **Probado** en las dos disposiciones (mod_php contra MariaDB 10.11 y
+      PHP-FPM contra la 11.4): la batería de siempre da lo mismo que antes
+      (se adaptaron las pruebas que miraban el marcado viejo: la flecha
+      pegada al texto, el `--ink3` viejo, "Recordarme", el menú sin
+      copias). La revisión encontró, y quedó corregido, que el texto
+      oculto de las celdas ensanchaba la página del panel en el teléfono
+      (`.tabla-scroll` con `position: relative`), y que el ícono de
+      calendario del campo de fecha recibía el foco sin marca
+      (`:focus-within`). **axe-core 4.13** (WCAG 2.2 A/AA y buenas
+      prácticas) en 26 vistas × 2 anchos × 2 modos: ninguna violación; los
+      78 casos de contraste que axe deja sin decidir (flechas ocultas y
+      texto de los SVG) los cubre el barrido propio. **Teclado** (Tab,
+      Shift+Tab, Enter en saltar, pestañas y menú, Enter y Espacio en el
+      interruptor) en 16 vistas × 2 anchos × 2 modos: 5156 comprobaciones
+      bien: el primer Tab es "Saltar al contenido", el foco nunca cae en
+      algo oculto, siempre se ve y el interruptor no lo tapa. **Barrido de
+      contraste** de todo lo que se ve (3786 mediciones: texto, valores y
+      ejemplos de los campos, texto de los SVG, formas de estado, bordes de
+      campos y botones, marca activa): de día, nada por debajo del mínimo
+      salvo los campos deshabilitados de Configuración (exentos); de
+      noche, solo el borde de los campos (1,47:1, el pendiente).
 
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.

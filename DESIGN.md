@@ -8,18 +8,20 @@ colors:
     pent: "#F3EEE3"       # mármol pentélico: fondo de página
     pario: "#FBF9F4"      # mármol pario: superficies (tarjetas, cabecera, campos)
     hair: "#E3DDD0"       # bordes finos
-    veta: "#D6CFC1"       # bordes de campos, divisores fuertes, marcadores neutros
+    veta: "#D6CFC1"       # divisores fuertes (bajo el encabezado de tabla), marcadores neutros
     ink: "#1E1C18"        # negro de hueso: texto principal
     ink2: "#5B564C"       # texto secundario
-    ink3: "#8A8478"       # etiquetas, metadatos, texto terciario
+    ink3: "#706B61"       # etiquetas, metadatos, texto terciario (4,58:1 sobre pent)
     olivo: "#4F5F35"      # kotinos: único color de marca
-    olivo2: "#75865A"     # olivo claro: hover del botón primario, bordes de avatar
-    olivoT: "#E6EAD9"     # olivo pálido: fondos de fila destacada y de iniciales
+    olivo2: "#75865A"     # olivo claro: bordes de avatar
+    olivoH: "#697851"     # hover del botón primario (pario encima: 4,53:1)
+    olivoT: "#E6EAD9"     # olivo pálido: fondos de fila destacada, de iniciales y de la tarjeta olivo
     olivoB: "#E3DDD0"     # borde de la fila destacada
     cinabrio: "#A63A2B"   # SOLO "en vivo"
-    enjuego: "#B9975C"    # estado "en juego"
+    enjuego: "#836838"    # estado "en juego" (4,53:1 sobre pent)
     vencedor: "#3F4A2C"   # estado "vencedor"
-    cerrado: "#8A8478"    # estado "cerrado"
+    cerrado: "#706B61"    # estado "cerrado" (igual que ink3)
+    campo: "#706B61"      # borde de los campos (igual que ink3)
   noche:
     pent: "#14130F"       # basalto
     pario: "#1A1814"
@@ -30,30 +32,33 @@ colors:
     ink3: "#A79F8C"
     olivo: "#8CA368"      # kotinos de noche
     olivo2: "#B9CB9C"
+    olivoH: "#B9CB9C"     # igual que olivo2
     olivoT: "#232A1B"
     olivoB: "#3A4430"
     cinabrio: "#D4614E"   # brasa
     enjuego: "#AD8B50"
     vencedor: "#A7B593"
     cerrado: "#A79F8C"
+    campo: "#3A362E"      # igual que veta: 1,47:1 sobre pario, debajo de 3:1 (pendiente de decisión)
 
 typography:
   serif: "'Cormorant Garamond', Georgia, serif"   # títulos, números grandes, marca
   sans: "'Jost', 'Segoe UI', sans-serif"          # interfaz, cuerpo, botones, etiquetas
-  epigrafe-griego: "GFS Didot"                    # solo epígrafes en griego
+  epigrafe-griego: "'GFS Didot', 'Cormorant Garamond', Georgia, serif"   # solo epígrafes en griego
   marca:     { family: serif, size: 20px, weight: 600, letterSpacing: .12em }
-  h1:        { family: serif, weight: 500, lineHeight: 1.1 }
-  cuerpo:    { family: sans, size: 15px, lineHeight: 1.55 }
+  h1:        { family: serif, weight: 500, lineHeight: 1.02 }
+  cuerpo:    { family: sans, size: 16px, lineHeight: 1.55 }
   intro:     { family: sans, color: ink2, maxWidth: 52ch }
   nav:       { family: sans, size: 13px, letterSpacing: .12em, transform: uppercase }
   boton:     { family: sans, size: 14px, letterSpacing: .08em }
   etiqueta:  { family: sans, size: 11px, letterSpacing: .2em, transform: uppercase, color: ink3 }
-  epigrafe:  { size: 14px, letterSpacing: .28em, color: ink3 }
+  epigrafe:  { family: epigrafe-griego, size: 14px, letterSpacing: .28em, color: ink3 }
+  negrita:   { weight: 500 }                    # strong y b: nunca más pesada
   estado:    { family: sans, size: 11px, letterSpacing: .16em, transform: uppercase }
   pestana:   { family: sans, size: 12px, letterSpacing: .16em, transform: uppercase }
 
 rounded:
-  piedra: 2px     # botones, campos, tarjetas: casi rectos, como piedra tallada
+  piedra: 2px     # botones y campos: casi rectos, como piedra tallada (las tarjetas, sin radio)
   circulo: 50%    # SOLO avatar, puntos de estado e interruptores
 
 breakpoints:
@@ -79,7 +84,9 @@ La marca de la empresa es **Agón** (símbolo "Lente": vesica piscis con ranura,
 
 ## Colores
 
-Todos los colores se usan a través de variables CSS (`var(--olivo)`, etc.), declaradas una vez en `:root` y redefinidas en `[data-theme="noche"]`. **Ningún color se escribe a mano en una página ni dentro de un SVG**, salvo las excepciones documentadas (la tarjeta de contraste y el disco del interruptor de tema).
+Todos los colores se usan a través de variables CSS (`var(--olivo)`, etc.), declaradas una vez en `:root` y redefinidas en `[data-theme="noche"]`. **Ningún color se escribe a mano en una página ni dentro de un SVG**, salvo las excepciones documentadas (la tarjeta de contraste, el disco del interruptor de tema y el `<meta name="theme-color">` del `<head>`, que arranca con `pent` de día y que `tema.js` cambia al de noche leyendo la variable).
+
+**Contraste mínimo.** Toda combinación nueva de colores cumple WCAG 2.2 AA: **4,5:1 para el texto** (3:1 si es grande: 24px, o 18,66px en negrita) y **3:1 para los bordes de los campos y las formas** que hacen falta para entender la pantalla (el punto o el cuadrado de un estado, la marca de la pestaña activa). Por eso `ink3`, `cerrado`, `enjuego` y el borde de los campos bajaron de tono de día, y el hover del botón primario tiene su propio color (`olivoH`). Queda una excepción, pendiente de decisión: de noche, el borde de los campos (`campo`, igual que `veta`) da 1,47:1.
 
 El modo noche se construyó con un método de dos familias:
 
@@ -94,46 +101,51 @@ Cada estado se reconoce por **color y forma a la vez**, para que se entienda en 
 |---|---|---|
 | En vivo | cinabrio `#A63A2B` / `#D4614E` | punto lleno, círculo de 9px |
 | Inscripción abierta | olivo `#4F5F35` / `#8CA368` | punto hueco, círculo con borde de 2px |
-| En juego | `#B9975C` / `#AD8B50` | cuadrado sólido de 9×9 |
+| En juego | `#836838` / `#AD8B50` | cuadrado sólido de 9×9 |
 | Vencedor | `#3F4A2C` / `#A7B593` | rama de olivo en miniatura (SVG) |
-| Cerrado | `#8A8478` / `#A79F8C` | raya horizontal de 12×2 |
+| Cerrado | `#706B61` / `#A79F8C` | raya horizontal de 12×2 |
 
 Nunca se inventa un estado nuevo con un color nuevo: si hace falta uno, se define con color **y** forma y se agrega a esta tabla.
 
 ## Tipografía
 
 - **Cormorant Garamond** (serif) para títulos, la marca y los números grandes (KPI, indicadores, marcadores destacados). Peso regular o medio, nunca negrita pesada.
-- **Jost** (sans humanista) para toda la interfaz: cuerpo, botones, navegación, etiquetas, campos.
-- **GFS Didot** reservada a los epígrafes en griego.
+- **Jost** (sans humanista) para toda la interfaz: cuerpo (16px), botones, navegación, etiquetas, campos.
+- **GFS Didot** reservada a los epígrafes en griego (Cormorant Garamond no trae las letras griegas). Se carga de Google Fonts con `display=swap`; mientras llega, o si no llega, las letras griegas se ven en la serif de respaldo del sistema (Georgia en Windows). El epígrafe lleva `lang="grc"` (griego antiguo), para que el lector de pantalla no lo lea como castellano.
+- **Negrita** (`strong`, `b`): peso 500 en todo el sitio, nunca más.
 
-La jerarquía secundaria se construye con **versalitas espaciadas** (mayúsculas chicas con separación de letras de .12em a .28em) en `ink3`, no con negritas ni con colores.
+La jerarquía secundaria se construye con **versalitas espaciadas** (mayúsculas chicas con separación de letras de .1em a .28em) en `ink3`, no con negritas ni con colores.
 
-Los números de marcadores y tablas usan cifras de ancho fijo, y un marcador (`2 – 0`) nunca se parte en dos renglones.
+Los números de marcadores y de todas las tablas usan cifras de ancho fijo (`tabular-nums`), y un marcador (`2 – 0`) nunca se parte en dos renglones.
 
 ## Formas y espaciado
 
-- **Bordes casi rectos (2px)** en botones, campos y tarjetas: piedra tallada, no píldoras. Los círculos quedan reservados al avatar, a los puntos de estado y a los interruptores.
+- **Bordes casi rectos (2px)** en botones y campos: piedra tallada, no píldoras. Las tarjetas van con las esquinas rectas, sin radio. Los círculos quedan reservados al avatar, a los puntos de estado y a los interruptores.
 - **Sin sombras.** La profundidad sale de la diferencia entre `pent` (fondo) y `pario` (superficie) y de bordes finos de 1px en `hair`.
 - **Motivos: firma discreta.** Un solo motivo por página, chico, al pie. La rama de olivo aparece únicamente donde marca a un vencedor real (chip de estado, conteo de kotinos en el perfil).
 
 ## Componentes
 
-**Cabecera.** Fondo `pario`, borde inferior `hair`. Marca a la izquierda (símbolo + "STADION" en serif espaciada). A la derecha: sin sesión, "Iniciar sesión" y "Crear cuenta"; con sesión, un solo círculo con la foto o las iniciales de la persona, que lleva al perfil, y el botón "Crear torneo". "Cerrar sesión" vive en el perfil, no en la cabecera.
+**Saltar al contenido.** El primer enlace de cada página. No se ve hasta que recibe el foco con Tab; entonces aparece arriba a la izquierda con la forma de un botón (`pario`, contorno `ink`) y lleva al `<main id="contenido">`. En las páginas con pestañas lleva a la vista abierta, para no cerrarla.
 
-**Navegación.** Debajo de la cabecera. Enlaces en versalitas `ink2`; el activo pasa a `ink` con un borde inferior de 1.5px en olivo. Siempre hay una sola entrada marcada.
+**Cabecera.** Fondo `pario`, borde inferior `hair`. Marca a la izquierda (símbolo + "STADION" en serif espaciada). A la derecha: sin sesión, "Iniciar sesión" y "Crear torneo"; con sesión, un solo círculo con la foto o las iniciales de la persona, que lleva al perfil, y el botón "Crear torneo". "Cerrar sesión" vive en el perfil, no en la cabecera.
+
+**Navegación.** Debajo de la cabecera. Enlaces en versalitas `ink2`; el activo pasa a `ink` con un borde inferior de 1.5px en olivo, y lleva `aria-current`. El menú marca **a lo sumo una** entrada: el perfil y la administración no marcan ninguna.
 
 **Botones.**
 - `.btn`: contorno de 1px en `ink`, fondo transparente, radio 2px.
-- `.btn-primario`: fondo olivo, texto `pario`; hover en `olivo2`. Un solo primario por zona.
-- Acción no disponible: texto en gris tenue, sin enlace, cursor de prohibido, acompañado de una nota que explica por qué (ejemplo: "Faltan 5 marcadores para publicar la ronda 3.").
+- `.btn-primario`: fondo olivo, texto `pario`; hover en `olivoH`. Un solo primario por zona.
+- Acción no disponible: texto en gris tenue, sin enlace, cursor de prohibido (`.enlace-apagado`). Si depende de un estado del torneo, va con una nota que explica por qué (ejemplo: "Faltan 5 marcadores para publicar la ronda 3."); si es algo que el sitio todavía no ofrece (Ayuda, Términos, Cargar en la maqueta del panel), alcanza el texto apagado. Nunca un enlace a `#` ni un botón que no hace nada.
 
-**Tarjetas.** Fondo `pario`, borde `hair`, radio 2px. La `.tarjeta-contraste` invierte (fondo oscuro, texto claro) con colores fijos que no cambian en modo noche.
+**Tarjetas.** Fondo `pario`, borde `hair`, sin radio. La `.tarjeta-olivo` va sobre `olivoT`, con la etiqueta en `ink2` (`ink3` no llega al contraste mínimo sobre ese fondo). La `.tarjeta-contraste` invierte (fondo oscuro, texto claro) con colores fijos que no cambian en modo noche.
 
-**Pestañas.** Versalitas `ink3`; la activa en `ink` con borde inferior olivo. Funcionan con `:target`, sin JavaScript.
+**Pestañas.** Versalitas `ink3`; la activa en `ink` con borde inferior olivo, y lleva `aria-current`. Funcionan con `:target`, sin JavaScript.
 
-**Tablas.** Encabezados en versalitas `ink3`, divisores `veta`. Si no entran en el ancho, se desplazan dentro de su propio marco (`.tabla-scroll`); la página nunca se desplaza de costado.
+**Tablas.** Encabezados en versalitas `ink3`, con un divisor `veta` debajo del encabezado y `hair` entre filas. Cifras de ancho fijo. Si no entran en el ancho, se desplazan dentro de su propio marco (`.tabla-scroll`); la página nunca se desplaza de costado.
 
-**Formularios.** Etiquetas en versalitas arriba del campo; campos con fondo `pario`, borde `veta`, radio 2px. Los campos de solo lectura van dentro de un `fieldset disabled`, con fondo `pent`, texto atenuado y un chip "Solo lectura".
+**Formularios.** Etiquetas en versalitas arriba del campo; campos con fondo `pario`, borde `campo`, radio 2px; el texto de ejemplo en `ink3`. Una ayuda que hace falta para completar el campo ("Mínimo 10 caracteres.") va debajo, en `ink2`, y el campo la nombra con `aria-describedby`: nunca solo en el texto de ejemplo ni en un `title`. Un campo mal completado pasa a **borde punteado en `ink`** (forma, no solo color; nunca cinabrio); la casilla de verificación, que no dibuja borde, lleva el mismo punteado como contorno. Los campos de solo lectura van dentro de un `fieldset disabled`, con fondo `pent`, texto atenuado y un chip "Solo lectura".
+
+**Avisos.** Los errores que devuelve el servidor van en `ink`, con una raya de 2px a la izquierda, nunca en cinabrio.
 
 **Chips.** Versalitas chicas con borde `hair`; el activo se invierte (fondo `ink`, texto `pario`).
 
@@ -141,7 +153,7 @@ Los números de marcadores y tablas usan cifras de ancho fijo, y un marcador (`2
 
 **Avatar.** Círculo con la foto recortada o, sin foto, las iniciales en Cormorant sobre `olivoT` con borde `olivo2`. El de la cabecera y el del perfil salen de la misma función.
 
-**Interruptor de tema.** Disco de piedra de 66px, fijo abajo a la derecha, en todas las páginas. Alterna `data-theme="noche"` en `<html>` y lo guarda en `localStorage`; se carga en `<head>` sin `defer` para evitar el parpadeo. Toda página reserva espacio al pie para que el disco nunca tape un control.
+**Interruptor de tema.** Disco de piedra de 66px, fijo abajo a la derecha, en todas las páginas. Alterna `data-theme="noche"` en `<html>` y lo guarda en `localStorage`; se carga en `<head>` sin `defer` para evitar el parpadeo. El botón se llama siempre "Modo noche" y `aria-pressed` dice si está puesto; los dos discos son dibujos (`aria-hidden`). Toda página reserva espacio al pie para que el disco nunca tape un control.
 
 **Gráficos.** SVG sin JavaScript, colores tomados de las variables, números escritos (no solo dibujados). Cuando dos tonos no se distinguen lo suficiente, las series se diferencian por **forma** (relleno lleno, relleno pálido con borde, contorno punteado), igual que los estados.
 
@@ -174,7 +186,7 @@ La interfaz habla como un epígrafe:
 
 - PHP y HTML/CSS; **JavaScript solo donde no hay alternativa** (hoy, el interruptor de tema).
 - Paleta y tipografías solo desde las variables de `:root`.
-- `:target` (pestañas) y `:has()` (marca del menú) no se vieron en clase: están marcados como **pendiente de confirmación docente**.
+- `:target` (pestañas), `:has()` (lo que acompaña a la vista abierta) y `:user-invalid` (campo mal completado) no se vieron en clase: están marcados como **pendiente de confirmación docente**.
 
 ## Hacé / no hagas
 
