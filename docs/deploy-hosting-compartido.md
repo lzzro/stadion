@@ -322,7 +322,7 @@ Correrla dos veces no hace daño: la segunda vez da el mismo resultado.
 
    | cuentas_de_muestra | claves_usables | ligas_de_muestra | estados | equipos | partidos | jugados | en_vivo | filas_tabla | puntero | octavo | tablas | restricciones_check | claves_foraneas | indices_unicos |
    |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-   | 3 | 0 | 3 | en_curso / inscripcion / en_curso | 31 | 111 | 57 | 1 | 22 | Titanes CS · 18 pts · +9 | Liceo 3 · 7 pts · -3 | 18 | 33 | 29 | 15 |
+   | 3 | 0 | 3 | en_curso / inscripcion / en_curso | 31 | 111 | 57 | 1 | 22 | Titanes CS · 18 pts · +9 | Liceo 3 · 9 pts · -3 | 18 | 33 | 29 | 16 |
 
    Los últimos tres son los de una base nueva con el esquema actual. Si
    algo no coincide, no sigas y avisá.

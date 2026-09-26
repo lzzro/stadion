@@ -928,16 +928,19 @@ dejaban ver interioridades del código.
       eliminación directa ni suizo.
       **Base** (`sql/migraciones/005_ligas.sql`, y la estructura también
       en `schema.sql`): `usuario.de_muestra`; `torneo.fecha_inicio`
-      opcional (la liga puede empezar "a definir"; que no haya dos ligas
-      vigentes con el mismo nombre lo cuida `nombreEnUso()`, porque el
-      UNIQUE de nombre y fecha admite varios NULL);
+      opcional (la liga puede empezar "a definir"); que no haya dos ligas
+      vigentes con el mismo nombre lo cuida la base, con la columna
+      calculada `torneo.nombre_vigente` (el nombre mientras la liga está
+      en borrador, inscripción o en curso; NULL después) y su UNIQUE
+      `uq_torneo_vigente`, porque el UNIQUE de nombre y fecha admite
+      varios NULL (`nombreEnUso()` da antes el aviso claro);
       `configuracion_torneo.criterio_desempate` (`diferencia` o `favor`);
       la tabla `pedido_inscripcion` (el mismo esquema que `pedido_rol`: un
       solo pendiente por equipo y liga con la columna calculada
       `pendiente_de` y su UNIQUE; resuelto con fecha y responsable);
       cuatro acciones de auditoría (`inscripcion`, `solicitud`, `cierre`,
       `fixture`); el catálogo con tildes (`Fútbol`, `Eliminación
-      directa`) y `Fútbol 5`. 18 tablas, 33 CHECK, 29 claves foráneas, 15
+      directa`) y `Fútbol 5`. 18 tablas, 33 CHECK, 29 claves foráneas, 16
       índices únicos. El `GRANT` de `sgdm_app` sobre la tabla nueva va en
       un bloque "[solo servidor propio]", y `armar-deploy.sh` genera la
       copia de cada migración para el hosting sin esos bloques.
@@ -948,13 +951,19 @@ dejaban ver interioridades del código.
       rechaza antes de mirar la clave) y tres ligas coherentes con las
       páginas de siempre: Liga Valorant · Otoño (12 equipos, una vuelta,
       7 fechas jugadas y la 8 en curso, con Titanes CS vs Vortex en vivo;
-      3/1/0, desempate por diferencia de mapas y después mapas a favor,
-      clasifican 4), Liga Barrial del Cerro (10 equipos, Fútbol 5, fecha
-      4 de 9) y Liga Interna Club Sur (inscripción abierta, 9 de 12, desde
-      el 4 de octubre). 31 equipos, 111 partidos, 57 jugados, cada uno con
-      su marcador; la tabla se calcula en la migración desde los
-      partidos, y la de la Valorant da la de la maqueta de `torneo.php`
-      (las 8 filas iguales). Los equipos están inscriptos en el orden del
+      series al mejor de 3 mapas, **sin empates** (`admite_empate = 0`,
+      todas 2-0 o 2-1); 3/1/0, desempate por diferencia de mapas y
+      después mapas a favor, clasifican 4), Liga Barrial del Cerro (10
+      equipos, Fútbol 5, fecha 4 de 9, con empates) y Liga Interna Club
+      Sur (inscripción abierta, 9 de 12, desde el 4 de octubre). 31
+      equipos, 111 partidos, 57 jugados, cada uno con su marcador; la
+      tabla se calcula en la migración desde los partidos. La de la
+      Valorant tiene el orden y las diferencias de mapas de la maqueta de
+      `torneo.php`, pero no sus puntos: la maqueta tenía empates, que una
+      serie al mejor de 3 no puede tener (decisión de Lucas: primero la
+      coherencia). Quedan Titanes 18, Nova 15, Vortex 12, Delta 12,
+      Aurora 9, Halcones 9, Ping Masters 9, Liceo 3 9, y la columna E en
+      0. Los equipos están inscriptos en el orden del
       método del círculo: la aplicación arma exactamente ese fixture. La
       005 frena sin cambiar nada si falta la 003 o la 004, si ya se
       aplicó (correrla dos veces no duplica nada) o si un nombre de
@@ -1002,6 +1011,17 @@ dejaban ver interioridades del código.
       README (ver Convenciones y `tests/README.md`), sin contraseñas ni
       datos reales; `armar-deploy.sh` corta si una carpeta `tests` se
       cuela en la copia.
+      **Regla pendiente (fase 3, carga de resultados)**: una liga que
+      se juega al mejor de N (mapas, sets, partidas) con N impar no
+      admite empate. La carga de resultados tiene que rechazar un
+      marcador igualado en esas ligas y la tabla no suma empates. El dato
+      ya existe: `configuracion_torneo.admite_empate` (la Valorant de
+      muestra lo tiene en 0, y `torneo.php` ya muestra "Sin empates" en
+      vez de los puntos del empate). Falta: que "Nueva liga" pregunte el
+      formato de las series (al mejor de N) y, con N impar, guarde
+      `admite_empate = 0` sin dejar elegirlo; y que la fase 3 valide con
+      ese dato (hoy `Resultado::validar()` rechaza un ganador en un
+      empate, pero no un empate donde no se admite).
       **Pendiente de confirmación docente**: las transacciones desde PHP
       y el bloqueo con `FOR UPDATE`; el método del círculo; la columna
       calculada de `pedido_inscripcion`; `ADD COLUMN IF NOT EXISTS`,
