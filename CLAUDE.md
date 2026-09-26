@@ -853,7 +853,15 @@ dejaban ver interioridades del código.
       26 vistas renderizadas, con sus nombres accesibles, más los 114
       mensajes de controladores y modelos): no queda voseo ni "tu/tus".
       "Continuar" de `crear.php` queda como excepción documentada, hasta la
-      fase 2 del motor.
+      fase 2 del motor. Después, dos ajustes más: en `login.php`,
+      "Bienvenido de vuelta" pasa a "De vuelta en el estadio" (sin sujeto
+      ni género); y en la tabla lateral de `torneos.php` la Copa
+      Interliceal pasa de "Octavos · cierra el jueves · 6 d" a "Cuartos ·
+      cierra hoy · 0 d", primera por cercanía: la tabla cuenta los días
+      desde el viernes (domingo 2 d, martes 4 d), así que el jueves era el
+      25, después de la semifinal que sale de esos cuartos (viernes 19,
+      18:00, en `llave.php` y `calendario.php`). El saludo de
+      `panel.html` y la cita de Heródoto quedan como están.
       **Probado** en las dos disposiciones: la batería de siempre igual,
       axe-core sin violaciones, y el barrido de contraste sin nada por
       debajo del mínimo en ninguno de los dos modos (salvo los campos
