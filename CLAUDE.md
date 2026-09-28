@@ -1118,8 +1118,17 @@ dejaban ver interioridades del código.
       marca ya no es solo color: raya vertical olivo al borde de la fila,
       la misma raya en la leyenda ("Clasifican a playoffs: los 4
       primeros", ya no "En verde:") y el texto oculto "clasifica a
-      playoffs" en cada fila. `DESIGN.md` suma la tabla de posiciones y
+      playoffs" en cada fila (la raya da 5,67:1 de día y 5,33:1 de noche
+      sobre el olivo pálido). `DESIGN.md` suma la tabla de posiciones y
       las cifras.
+      **Probado** en las dos disposiciones, de día y de noche: todas las
+      baterías bien (recorrido 8/8 con el menú en 65 combinaciones de
+      página y ancho; páginas públicas 186/186 y 190/190, con
+      la tabla nueva: encabezados por liga, alineación, cifras, raya y
+      teléfono), accesibilidad 530/530 sin violaciones de axe, contraste
+      (3744 y 3900 mediciones, nada bajo el mínimo) y teclado (2880 y 3072
+      comprobaciones). Con el CSS viejo, la prueba del menú falla en
+      `torneos.php`, `llave.php` y el panel.
       **Pendiente para cuando llegue la eliminación directa**: "Nueva
       liga" no pregunta cuántos clasifican a playoffs (guarda 0); se suma
       al formulario junto con la llave que los recibe.
