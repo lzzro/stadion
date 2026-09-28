@@ -1091,6 +1091,39 @@ dejaban ver interioridades del código.
       para la versión del CSS; y Node, Playwright y axe-core, que son
       herramientas de prueba y no van al hosting.
 
+- [x] Dos arreglos de interfaz después de la fase 2 —
+      **Menú alto**: en `torneos.php` (y en cualquier página corta en una
+      pantalla grande o alta: también `llave.php` y el panel) la franja
+      del menú crecía hasta ~100 px con la línea de la página actual
+      pegada abajo. La causa: `.pagina` es una grilla con
+      `min-height: 100vh` y todas las filas en `auto`, y el alto que
+      sobra de una página corta se repartía entre todas las filas, el
+      menú incluido. Ahora las filas son `auto` salvo la del contenido
+      (`grid-template-rows: auto auto 1fr auto auto`, y `auto auto 1fr
+      auto` desde 768 px): lo que sobra va solo al `<main>`. Sin altura
+      fija. `tests/e2e/recorrido.js` compara el alto del menú de cada
+      página con el de `index.php` en cinco anchos (390 a 1920 px, con
+      una ventana alta) y mira que la línea quede pegada al texto.
+      **Tabla de posiciones** (`torneo.php#posiciones`, la única página
+      que la muestra): cifras de altura pareja y ancho fijo
+      (`lining-nums tabular-nums`) en todas las tablas y marcadores;
+      cada columna alinea igual encabezado y valores (números a la
+      derecha), y la columna # se ajusta a su número; una columna nueva
+      con los tantos a favor y en contra (`13:4`), con el nombre de la
+      unidad de la disciplina (Mapas, Goles, Tantos); la columna E solo en
+      las ligas que admiten empate; en el teléfono se ocultan G, E y P
+      (vuelven desde 768 px). Los que clasifican a playoffs salen de
+      `configuracion_torneo.clasifican_playoffs` (ya existía: Valorant 4,
+      Barrial e Interna 0), así que **no hizo falta la migración 006**; la
+      marca ya no es solo color: raya vertical olivo al borde de la fila,
+      la misma raya en la leyenda ("Clasifican a playoffs: los 4
+      primeros", ya no "En verde:") y el texto oculto "clasifica a
+      playoffs" en cada fila. `DESIGN.md` suma la tabla de posiciones y
+      las cifras.
+      **Pendiente para cuando llegue la eliminación directa**: "Nueva
+      liga" no pregunta cuántos clasifican a playoffs (guarda 0); se suma
+      al formulario junto con la llave que los recibe.
+
 **Todavía no empezado (tercera entrega, fuera de alcance por ahora):**
 Docker, módulos de liga/eliminación/suizo, PHPUnit, Zabbix, SSL.
 

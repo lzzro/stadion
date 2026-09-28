@@ -116,7 +116,7 @@ Nunca se inventa un estado nuevo con un color nuevo: si hace falta uno, se defin
 
 La jerarquía secundaria se construye con **versalitas espaciadas** (mayúsculas chicas con separación de letras de .1em a .28em) en `ink3`, no con negritas ni con colores.
 
-Los números de marcadores y de todas las tablas usan cifras de ancho fijo (`tabular-nums`), y un marcador (`2 – 0`) nunca se parte en dos renglones.
+Los números de marcadores y de todas las tablas usan cifras de altura pareja y ancho fijo (`font-variant-numeric: lining-nums tabular-nums`), sin cambiar la tipografía: la Cormorant trae por defecto cifras de estilo antiguo, que suben y bajan de la línea (el 1 parece una ı, el 9 baja) y desparejan una columna. Un marcador (`2 – 0`) nunca se parte en dos renglones.
 
 ## Formas y espaciado
 
@@ -141,7 +141,9 @@ Los números de marcadores y de todas las tablas usan cifras de ancho fijo (`tab
 
 **Pestañas.** Versalitas `ink3`; la activa en `ink` con borde inferior olivo, y lleva `aria-current`. Funcionan con `:target`, sin JavaScript.
 
-**Tablas.** Encabezados en versalitas `ink3`, con un divisor `veta` debajo del encabezado y `hair` entre filas. Cifras de ancho fijo. Si no entran en el ancho, se desplazan dentro de su propio marco (`.tabla-scroll`); la página nunca se desplaza de costado.
+**Tablas.** Encabezados en versalitas `ink3`, con un divisor `veta` debajo del encabezado y `hair` entre filas. Cifras de altura pareja y ancho fijo. Cada columna alinea igual el encabezado y los valores: el texto a la izquierda, los números a la derecha. Si no entran en el ancho, se desplazan dentro de su propio marco (`.tabla-scroll`); la página nunca se desplaza de costado. Una tabla puede dejar en el teléfono solo las columnas que importan y sumar el detalle desde `768px` (la de posiciones deja #, equipo, PJ, tantos, Dif y Pts, y suma G, E y P).
+
+**Tabla de posiciones.** Columnas: #, equipo, PJ, G, E, P, los tantos a favor y en contra con el nombre de la unidad de la disciplina ("Mapas", "Goles", "Tantos": `13:4`), Dif y Pts. La columna E solo va en las ligas que admiten empate. Los que clasifican a playoffs (cuántos, lo dice la configuración de la liga) llevan **color y forma**: fondo `olivoT` y una raya vertical `olivo` de 3px al borde izquierdo de la fila; la leyenda de abajo repite la raya ("Clasifican a playoffs: los 4 primeros"), y cada fila lo dice también en texto para el lector de pantalla. Nunca "En verde:".
 
 **Formularios.** Etiquetas en versalitas arriba del campo; campos con fondo `pario`, borde `campo`, radio 2px; el texto de ejemplo en `ink3`. Una ayuda que hace falta para completar el campo ("Mínimo 10 caracteres.") va debajo, en `ink2`, y el campo la nombra con `aria-describedby`: nunca solo en el texto de ejemplo ni en un `title`. Un campo mal completado pasa a **borde punteado en `ink`** (forma, no solo color; nunca cinabrio); la casilla de verificación, que no dibuja borde, lleva el mismo punteado como contorno. Los campos de solo lectura van dentro de un `fieldset disabled`, con fondo `pent`, texto atenuado y un chip "Solo lectura".
 
