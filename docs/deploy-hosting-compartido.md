@@ -566,10 +566,15 @@ Probá también, por las dudas:
 ```
 https://TU-DOMINIO/stadion_app/models/Usuario.php
 https://TU-DOMINIO/controllers/
+https://TU-DOMINIO/css/
+https://TU-DOMINIO/img/
+https://TU-DOMINIO/js/
 ```
 
-El primero tiene que dar 404. El segundo, 403 o 404, nunca un listado de
-archivos.
+El primero tiene que dar 404. Las cuatro carpetas, **403**, nunca un
+listado de archivos: lo cierra la línea `Options -Indexes` de
+`public_html/.htaccess`. Si alguna muestra la lista, en el hosting quedó un
+`.htaccess` anterior, sin esa línea (ver **Si algo falla**).
 
 ### Sobre el candado
 
@@ -642,6 +647,8 @@ lo tiene que aprobar **otra** cuenta con el rol administrador.
 | "El sitio no encuentra su aplicación" | `stadion_app/` no está al lado de `public_html/` | Paso 3, o cambiá la línea de `$APLICACION` en los ocho puentes |
 | Una página da error 500 o sale en blanco apenas se abre | `stadion_app/` no está al lado de `public_html/`: cada página lo incluye | Paso 3 |
 | La portada muestra una lista de archivos, o la vieja `index.html` | Falta `public_html/.htaccess` | Paso 3: mostrá los archivos ocultos y comprobá que esté |
+| `/controllers/`, `/css/`, `/img/` o `/js/` muestran una lista de archivos | En `public_html/` quedó un `.htaccess` anterior, sin `Options -Indexes` | Paso 3: subí el `.htaccess` nuevo, con los archivos ocultos a la vista |
+| Error 500 en todo el sitio, y el `error_log` dice `Options not allowed here` en `public_html/.htaccess` | El hosting no admite `Options` en un `.htaccess` | Cambiá la línea `Options -Indexes` por `RedirectMatch 403 "^/(controllers\|css\|img\|js)/?$"`: cierra las cuatro carpetas sin usar `Options` |
 | El perfil no abre y el `error_log` dice `Unknown column 'foto_perfil'` | Falta la migración 002 | Paso 2, **Si la base ya estaba importada de antes** |
 | "El pedido no se puede registrar por ahora." al pedir el rol | Falta la migración 003 | Paso 2, **Si la base ya estaba importada de antes** |
 | "El perfil no se guarda." al guardar un texto con un emoji o una letra poco común (ł, ő, ğ…); con tildes y eñe sí guarda | Las tablas están en `latin1` | Paso 2: **La 004, paso a paso** |
@@ -767,6 +774,31 @@ mismo `DirectoryIndex` pobre de un hosting (`index.html` primero), que el
   anterior y con cuentas: las conserva sin imagen, y la base rechaza en esas
   columnas una ruta, un `../`, un `.php`, una doble extensión y mayúsculas.
 
+### El listado de carpetas
+
+Con el sitio ya publicado apareció que `/controllers/` y `/css/` mostraban
+la lista de sus archivos. El hosting trae el listado prendido, y el
+`.htaccess` de la raíz no lo apagaba; el de `subidas/` sí. No se veía el
+código de ningún PHP, porque el servidor los ejecuta, ni nada de
+`stadion_app/`, pero sí los nombres de los archivos. Se agregó
+`Options -Indexes` a `public/.htaccess`, se rearmó la copia con
+`armar-deploy.sh` y se probó con Apache 2.4.58, con el listado prendido
+igual que en el hosting:
+
+| Dirección | Antes | Después |
+|---|---|---|
+| `/controllers/`, `/css/`, `/img/`, `/js/` | 200, con la lista de archivos | **403** |
+| `/subidas/` | 403 | 403 |
+| `/`, `/css/style.css`, `/js/tema.js`, `/img/agon.png` | 200 | 200 |
+| `/torneos.html` | 301 | 301 |
+
+Da lo mismo con la restricción que suelen poner los hosting con cPanel
+(`AllowOverride All Options=...`, con `Indexes` en la lista). En un
+servidor que no admite `Options` en un `.htaccess`, todo el sitio da 500 y
+el `error_log` dice `Options not allowed here`. Ahí la línea
+`RedirectMatch 403` de **Si algo falla** da 403 en las cuatro carpetas y
+deja el resto igual; también se probó.
+
 ### La codificación y la migración 004
 
 Probado en **dos versiones de MariaDB**: la 10.11 (la de la VM) y la
@@ -842,6 +874,9 @@ sus bases, nada global), no con root.
 - cPanel en sí: crear la base, los permisos del usuario, el File Manager.
 - Que tu hosting en particular respete el `.htaccess` de `subidas/`: es la
   prueba de la carpeta de subidas del paso 6, y no se saltea.
+- Que tu hosting admita `Options -Indexes` en `public_html/.htaccess`: las
+  cuatro carpetas de **La prueba que importa** tienen que dar 403, y el
+  resto del sitio tiene que seguir andando.
 - El phpMyAdmin de tu cPanel puede ser de otra versión que la 5.2.1: los
   nombres de los botones pueden cambiar un poco (en versiones viejas,
   **+ Options** en vez de **Extra options**).

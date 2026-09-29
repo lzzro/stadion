@@ -41,7 +41,7 @@ Lo dado en clase, por materia:
 ```
 stadion/
 ├── public/
-│   ├── .htaccess           ← DirectoryIndex index.php y desvío de las .html viejas
+│   ├── .htaccess           ← DirectoryIndex index.php, desvío de las .html viejas y sin listado de carpetas
 │   ├── index.php  torneos.php  torneo.php  calendario.php  llave.php
 │   │                       ← páginas que leen de la base (fase 2): nada escrito a mano
 │   ├── login.php  registro.php        ← páginas: la cabecera depende de la sesión
@@ -664,6 +664,10 @@ dejaban ver interioridades del código.
       vencida por inactividad se refleja en la primera página que se abre.
       `public/.htaccess` pone `DirectoryIndex index.php` y manda las
       direcciones `.html` viejas a las nuevas con un 301.
+      Después, con el sitio publicado, se vio que `/controllers/` y `/css/`
+      listaban sus archivos: `Options -Indexes` en `public/.htaccess` lo
+      cierra (403 en controllers, css, img y js; probado con Apache 2.4.58 y
+      anotado en docs/deploy-hosting-compartido.md).
       **Perfil**: pestañas Datos, Mis torneos y Rendimiento con la mecánica
       `:target` de siempre (Datos, la de por defecto, va última; sus reglas
       son `#mis-torneos:target ~ #datos` y `#rendimiento:target ~ #datos`).

@@ -98,7 +98,10 @@ Abrilo con un editor de texto plano y **agregá al final** este contenido:
     DocumentRoot "D:/xampp/htdocs/stadion/public"
 
     <Directory "D:/xampp/htdocs/stadion/public">
-        Options Indexes FollowSymLinks
+        # Sin Indexes: una carpeta sin index.php (css/, img/, js/) no
+        # muestra la lista de sus archivos. public/.htaccess también lo
+        # apaga, con Options -Indexes.
+        Options FollowSymLinks
         AllowOverride All
         Require all granted
         DirectoryIndex index.html
@@ -359,6 +362,9 @@ sirviendo este mismo proyecto. Resultados:
 - `apps/models`, `apps/config`, `apps/index.php`, `sql/` y `CLAUDE.md`
   responden 404, igual que un intento de salirse con `/public/../sql/`.
 - El listado de `apps/controllers/` está cerrado por `Options -Indexes`.
+- `css/`, `img/` y `js/` tampoco se listan: dan 403 por el `Options -Indexes`
+  de `public/.htaccess`, aunque el bloque de `public` dijera `Indexes`
+  (probado con Apache 2.4.58).
 - Con un solo virtual host declarado, los pedidos a `localhost` caen en él;
   agregando el bloque de `localhost` primero, cada nombre va a su sitio.
 
